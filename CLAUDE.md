@@ -136,17 +136,51 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
 - **Emulator gotcha:** the running AVD had a dead DNS proxy (`UnknownHostException`
   though raw-IP ping worked). Fix = relaunch with `-dns-server 8.8.8.8,8.8.4.4`.
 
+### Phase 06 — Agent orchestration loop (+ phase-12 seams) ✅
+- **`com.assist.agent`** spine: `AgentTools` catalog (18 `ClientTool`s), `ToolRouter`
+  (control/perception→`DeviceController`; `say`/`ask`/`finish`→`UserIo`; context
+  tools→`SessionRepository`+context edits; `get_screen_state`/`take_screenshot`→
+  capture+`tool_result`), `ActionGate` (pure classify + confirm; SEND/PAY/DELETE/
+  INSTALL/CALL/PASSWORD via target-element keywords + allowlist), `AgentLoop`
+  (cancellable coroutine; auto-perception; loop guards: max-steps, no-progress,
+  context-ceiling; `interrupt()`), `AgentEventBus` (`SharedFlow<AgentEvent>`),
+  `AgentService` (specialUse FGS), `DebugRunReceiver` (`com.assist.DEBUG_RUN` /
+  `DEBUG_INTERRUPT`). `UserIo`→`LoggingUserIo` stub, `SystemPromptProvider`→real
+  phase-10 impl (see Integration). New `di/AgentModule.kt`; `AppModule` untouched.
+- **Phase-12 seams folded in (additive):** `ToolSpec` sealed (`ClientTool`/
+  `ProviderTool`); `ToolDef` now a `typealias` → `ToolSpec.ClientTool` (zero churn);
+  `LlmRequest.tools: List<ToolSpec>`; `Role.SYSTEM` threaded through
+  `buildLlmMessages` + Anthropic mapper (→`{"role":"system"}`); `Speed{STANDARD,FAST}`
+  on `LlmRequest`; `usage.speed`/`LlmResponse.speed`; fast-mode request-plumbing
+  (`speed:"fast"`+`fast-mode-2026-02-01` beta on opus-4-8/4-7 only); `SystemTurnPlacement`
+  legality check (§5 hooks). Memory tool / recipes / fast UI / SessionSteering left
+  for the follow-on Phase 12.
+- **70 unit tests green** (43 prior + `ActionGate` 14, `SystemTurnPlacement` 7,
+  `AnthropicRequestFactory` 6).
+- **Live e2e on `emulator-5554`** (real opus-4-8, key baked via BuildConfig): the
+  `DEBUG_RUN` intent "open the Clock app and start a 1 minute timer" completed via
+  real `open_app`+`tap`+`set_text` calls (screenshot: a running 1m timer counting
+  down), all persisted to Room. `interrupt()` unwound the loop in **493ms**. A gated
+  tap on the dialer Call button fired the confirmation (`ActionGate: gated tap [CALL]
+  -> APPROVED`) before executing.
+
+### Phase 08/09 — Voice research + swappable STT/TTS/wake seam ✅ (design)
+- `.claude/voice-architecture.md`: read the `SpeechRecognizer`/`TextToSpeech`
+  reference pages and captured findings (SpeechRecognizer is single-shot — fine for
+  `ask()`, unfit for always-on wake; OS hotword is gated to the default-assistant
+  role → sideload needs a dedicated on-device detector; TextToSpeech barge-in via
+  `stop()`/`QUEUE_FLUSH`, `onRangeStart` for caption sync). Designed a
+  provider-agnostic seam (`SttEngine`/`TtsEngine`/`WakeWordDetector`/
+  `AudioSessionArbiter`/`VoiceProvider`) so the backend swaps between the Android
+  APIs, cloud STT/TTS, OpenAI/Gemini realtime duplex, or on-device libs. Phase-08/09
+  specs wired to it.
+
 ### Next
-- **Phase 06 — agent orchestration loop** (integration spine): wire
-  `DeviceController` (03) + `LlmClient`/`ModelRouter` (04) + `SessionRepository`
-  (05) into the tool-router + agent loop. Defines the tool catalog + safety gates.
-  **Decision:** fold Phase 12's *seams* into 06 (build the loop on an extensible
-  `ToolSpec` interface + `Role.SYSTEM`/`speed`/steering+memory hooks) so 12 layers
-  on without rewriting 06's core. 12's *feature payload* (MemoryStore + TaskRecipe
-  index, fast-mode toggle UI + cost rows, `SessionSteering` helpers) stays a
-  follow-on.
-- **Parallel with the spine:** Phase 10 (system prompt, `prompt/`) and Phase 11
-  (device deploy, scripts/docs) — independent packages, no file overlap.
+- **Phase 07 (overlay)** and **08 (voice)** run in parallel — both consume
+  `AgentEventBus`; 08 provides the real `UserIo` + implements the `android`
+  `VoiceProvider` from `.claude/voice-architecture.md`.
+- **Phase 12** (task memory / fast-mode UI / `SessionSteering` barge-in) queued as a
+  follow-on building on the seams landed in 06.
 
 ## Notes / gotchas
 - Homebrew `openjdk@17` won't bottle on this machine (needs full Xcode); used a
