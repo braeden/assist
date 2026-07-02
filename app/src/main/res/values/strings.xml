@@ -24,6 +24,10 @@
     <string name="api_key_absent">No key stored yet.</string>
 
     <string name="start_session">Start session</string>
+    <string name="start_session_hint">e.g. open Clock and start a 5 minute timer</string>
+    <string name="start_session_go">Start</string>
+    <string name="start_session_started">Session started: %1$s</string>
+    <string name="action_cancel">Cancel</string>
 
     <!-- Voice test (phase-08) -->
     <string name="voice_test_open">Voice test (say / listen)</string>

@@ -2,6 +2,7 @@ package com.assist.ui
 
 import android.Manifest
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +23,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -33,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -40,6 +44,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.assist.R
+import com.assist.agent.AgentService
 import com.assist.overlay.OverlayService
 
 @Composable
@@ -117,12 +122,35 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
             OverlayCard(overlayOk = overlayOk)
 
             val ready = hasApiKey && accessibilityOk
+            var showStartDialog by remember { mutableStateOf(false) }
             Button(
-                onClick = { /* no-op until phase-06 wires the agent loop */ },
+                onClick = { showStartDialog = true },
                 enabled = ready,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.start_session))
+            }
+
+            if (showStartDialog) {
+                StartSessionDialog(
+                    onDismiss = { showStartDialog = false },
+                    onStart = { intent ->
+                        // Launch the agent loop in its foreground service. Also
+                        // surface the overlay (if permitted) so the run is visible
+                        // while the agent drives other apps.
+                        ContextCompat.startForegroundService(
+                            context,
+                            AgentService.runIntent(context, intent),
+                        )
+                        if (overlayOk) OverlayService.start(context)
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.start_session_started, intent.take(40)),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                        showStartDialog = false
+                    },
+                )
             }
 
             OutlinedButton(
@@ -138,6 +166,39 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
             }
         }
     }
+}
+
+@Composable
+private fun StartSessionDialog(
+    onDismiss: () -> Unit,
+    onStart: (String) -> Unit,
+) {
+    var intent by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.start_session)) },
+        text = {
+            OutlinedTextField(
+                value = intent,
+                onValueChange = { intent = it },
+                label = { Text(stringResource(R.string.start_session_hint)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onStart(intent.trim()) },
+                enabled = intent.isNotBlank(),
+            ) {
+                Text(stringResource(R.string.start_session_go))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
 }
 
 @Composable
