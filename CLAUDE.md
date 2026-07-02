@@ -62,6 +62,26 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   (macOS/Linux SDK + JDK discovery) and auto-generates gitignored
   `local.properties` from the resolved SDK on first build.
 
+### Phase 03 — Accessibility service + device tools ✅
+- `service.AssistAccessibilityService` (singleton `instance`, `@AndroidEntryPoint`)
+  registered in the manifest + `res/xml/accessibility_service_config.xml` (retrieve
+  content, gestures, screenshot). Emits `ScreenChangeSignals.events` on window
+  state/content changes so the agent loop can await UI settle.
+- `ScreenSerializer` walks the a11y tree — framework-free via a `NodeView`
+  abstraction — into `ScreenState`/`UiElement` with a stable per-frame `id`→node
+  map (`ScreenFrame`). Caps 150 elements / 200-char text; recycles nodes (skipped
+  immediately, retained on `frame.recycle()`) to avoid ANRs.
+- `DeviceController` (interface + `DefaultDeviceController`): `getScreenState`,
+  `takeScreenshot`, tap/longPress (+xy), swipe/scroll (id or direction), setText,
+  pressKey (BACK/HOME/RECENTS/NOTIFICATIONS/QUICK_SETTINGS/ENTER), openApp (label
+  resolution via `AppResolver`), wait — all `suspend`, return `ToolOutcome`.
+- DI in new `di/ServiceModule.kt` (AppModule untouched). Debug hook:
+  `com.assist.DEBUG_DUMP_SCREEN` broadcast dumps/acts for verification.
+- Verified on emulator: Settings dump (27 elements, sensible bounds/flags),
+  tap-by-id navigation + swipe change the screen, screenshot non-null 1440x3120.
+  29 unit tests green (serializer mapping/caps/recycle, bounds/center, swipe
+  geometry, label resolution, rendering).
+
 ### Next
 - **Fan out: phases 03 / 04 / 05 in parallel** (see `.claude/README.md`). They
   touch `service/`, `llm/`, `data/` respectively and share only `SecretStore`
