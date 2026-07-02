@@ -8,6 +8,7 @@ import com.assist.voice.AudioSessionArbiter
 import com.assist.voice.DefaultAudioSessionArbiter
 import com.assist.voice.SttEngine
 import com.assist.voice.TtsEngine
+import com.assist.voice.TypedReplySource
 import com.assist.voice.VoiceProvider
 import com.assist.voice.VoiceUserIo
 import com.assist.voice.android.AndroidSttEngine
@@ -58,7 +59,14 @@ object VoiceModule {
         stt: SttEngine,
         arbiter: AudioSessionArbiter,
         bus: AgentEventBus,
-    ): UserIo = VoiceUserIo(tts = tts, stt = stt, arbiter = arbiter, bus = bus)
+        typedReplies: TypedReplySource,
+    ): UserIo = VoiceUserIo(
+        tts = tts,
+        stt = stt,
+        arbiter = arbiter,
+        bus = bus,
+        typedReplies = typedReplies,
+    )
 
     @Provides
     @Singleton
