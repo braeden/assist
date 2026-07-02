@@ -34,7 +34,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,8 +68,8 @@ fun OverlayRoot(
     onNewSession: () -> Unit,
     onSwitchSession: (Long) -> Unit,
     onCompact: () -> Unit,
-    onDropScreenshots: () -> Unit,
     onSubmitReply: (String) -> Unit,
+    onDictate: suspend () -> String?,
     onSetFocusable: (Boolean) -> Unit,
     onStop: () -> Unit,
 ) {
@@ -81,8 +83,8 @@ fun OverlayRoot(
             onNewSession = onNewSession,
             onSwitchSession = onSwitchSession,
             onCompact = onCompact,
-            onDropScreenshots = onDropScreenshots,
             onSubmitReply = onSubmitReply,
+            onDictate = onDictate,
             onSetFocusable = onSetFocusable,
             onStop = onStop,
         )
@@ -165,8 +167,8 @@ private fun Panel(
     onNewSession: () -> Unit,
     onSwitchSession: (Long) -> Unit,
     onCompact: () -> Unit,
-    onDropScreenshots: () -> Unit,
     onSubmitReply: (String) -> Unit,
+    onDictate: suspend () -> String?,
     onSetFocusable: (Boolean) -> Unit,
     onStop: () -> Unit,
 ) {
@@ -259,13 +261,16 @@ private fun Panel(
             }
 
             Spacer(Modifier.height(10.dp))
-            ReplyField(onSubmitReply = onSubmitReply, onSetFocusable = onSetFocusable)
+            ReplyField(
+                onSubmitReply = onSubmitReply,
+                onDictate = onDictate,
+                onSetFocusable = onSetFocusable,
+            )
 
             Spacer(Modifier.height(10.dp))
             ControlsRow(
                 onNewSession = onNewSession,
                 onCompact = onCompact,
-                onDropScreenshots = onDropScreenshots,
                 onStop = onStop,
             )
 
@@ -382,18 +387,38 @@ private fun ConfirmationRow(prompt: ConfirmationPrompt, onSubmitReply: (String) 
 }
 
 @Composable
-private fun ReplyField(onSubmitReply: (String) -> Unit, onSetFocusable: (Boolean) -> Unit) {
+private fun ReplyField(
+    onSubmitReply: (String) -> Unit,
+    onDictate: suspend () -> String?,
+    onSetFocusable: (Boolean) -> Unit,
+) {
+    val scope = rememberCoroutineScope()
     var typing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
+    var dictating by remember { mutableStateOf(false) }
 
     if (!typing) {
-        OutlinedButton(
-            onClick = {
-                typing = true
-                onSetFocusable(true)
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("Type a reply") }
+        // Collapsed: type, or tap the mic to speak an answer and send it directly.
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedButton(
+                onClick = {
+                    typing = true
+                    onSetFocusable(true)
+                },
+                modifier = Modifier.weight(1f),
+            ) { Text(if (dictating) "Listening…" else "Type a reply") }
+            MicButton(dictating) {
+                dictating = true
+                scope.launch {
+                    val spoken = onDictate()
+                    dictating = false
+                    if (!spoken.isNullOrBlank()) onSubmitReply(spoken)
+                }
+            }
+        }
         return
     }
 
@@ -404,7 +429,10 @@ private fun ReplyField(onSubmitReply: (String) -> Unit, onSetFocusable: (Boolean
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Button(
                 onClick = {
                     onSubmitReply(text)
@@ -419,6 +447,30 @@ private fun ReplyField(onSubmitReply: (String) -> Unit, onSetFocusable: (Boolean
                 typing = false
                 onSetFocusable(false)
             }) { Text("Cancel") }
+            Spacer(Modifier.weight(1f))
+            // Dictate into the field (append), so the user can still edit before sending.
+            MicButton(dictating) {
+                dictating = true
+                scope.launch {
+                    val spoken = onDictate()
+                    dictating = false
+                    if (!spoken.isNullOrBlank()) {
+                        text = if (text.isBlank()) spoken else "$text $spoken"
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Mic affordance for the reply field; shows a spinner while capturing. */
+@Composable
+private fun MicButton(dictating: Boolean, onClick: () -> Unit) {
+    IconButton(onClick = { if (!dictating) onClick() }) {
+        if (dictating) {
+            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+        } else {
+            Text("🎤", style = MaterialTheme.typography.titleMedium)
         }
     }
 }
@@ -427,7 +479,6 @@ private fun ReplyField(onSubmitReply: (String) -> Unit, onSetFocusable: (Boolean
 private fun ControlsRow(
     onNewSession: () -> Unit,
     onCompact: () -> Unit,
-    onDropScreenshots: () -> Unit,
     onStop: () -> Unit,
 ) {
     Row(
@@ -436,7 +487,6 @@ private fun ControlsRow(
     ) {
         TextButton(onClick = onNewSession) { Text("New", style = MaterialTheme.typography.labelSmall) }
         TextButton(onClick = onCompact) { Text("Compact", style = MaterialTheme.typography.labelSmall) }
-        TextButton(onClick = onDropScreenshots) { Text("Drop shots", style = MaterialTheme.typography.labelSmall) }
         Spacer(Modifier.weight(1f))
         TextButton(onClick = onStop) { Text("Hide", style = MaterialTheme.typography.labelSmall) }
     }

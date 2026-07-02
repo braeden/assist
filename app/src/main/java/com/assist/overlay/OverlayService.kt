@@ -113,11 +113,11 @@ class OverlayService : Service() {
                         onNewSession = controller::newSession,
                         onSwitchSession = controller::switchSession,
                         onCompact = controller::compactNow,
-                        onDropScreenshots = controller::dropScreenshotsNow,
                         onSubmitReply = { text ->
                             controller.submitReply(text)
                             setFocusable(false)
                         },
+                        onDictate = controller::dictate,
                         onSetFocusable = ::setFocusable,
                         onStop = { stopSelf() },
                     )

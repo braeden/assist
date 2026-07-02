@@ -13,8 +13,6 @@ import com.assist.llm.LlmStreamEvent
 import com.assist.llm.Role
 import com.assist.llm.Speed
 import com.assist.llm.ToolCall
-import com.assist.llm.anthropic.ModelRouter
-import com.assist.llm.anthropic.StepDifficulty
 import com.assist.service.DeviceController
 import com.assist.service.ScreenChangeSignals
 import com.assist.service.ScreenState
@@ -44,7 +42,6 @@ import javax.inject.Singleton
 @Singleton
 class AgentLoop @Inject constructor(
     private val llm: LlmClient,
-    private val modelRouter: ModelRouter,
     private val repository: SessionRepository,
     private val device: DeviceController,
     private val router: ToolRouter,
@@ -114,9 +111,10 @@ class AgentLoop @Inject constructor(
 
         val tools = AgentTools.catalog()
         val toolNames = tools.map { it.name }
-        // Fast mode is session-level (switching speed busts the prompt cache), so
-        // read the pref once at the start of the run.
+        // Fast mode and model are session-level (switching either busts the prompt
+        // cache), so read both prefs once at the start of the run.
         val speed = if (settings.isFastModeEnabled()) Speed.FAST else Speed.STANDARD
+        val model = settings.getAgentModel().modelId
         var pendingContext: ContextManagement? = null
         val progress = NoProgressTracker()
         var step = 0
@@ -129,7 +127,6 @@ class AgentLoop @Inject constructor(
                 return
             }
 
-            val model = modelRouter.modelFor(StepDifficulty.COMPLEX)
             val request = LlmRequest(
                 model = model,
                 system = promptProvider.system(
@@ -163,12 +160,14 @@ class AgentLoop @Inject constructor(
             var producedPerception = false
             var finished = false
             var finishSummary: String? = null
+            var spokeThisTurn = false
 
             for (call in response.toolCalls) {
                 coroutineContext.ensureActive()
                 bus.emit(AgentEvent.ToolCallStarted(call.id, call.name, call.argumentsJson))
 
                 val exec = gateAndExecute(sessionId, call, latestScreen)
+                if (call.name == AgentTools.SAY && exec.success) spokeThisTurn = true
                 repository.appendToolCall(
                     sessionId = sessionId,
                     messageId = null,
@@ -194,6 +193,9 @@ class AgentLoop @Inject constructor(
             }
 
             if (finished) {
+                // Speak the finish summary only if the model didn't already `say`
+                // something this turn — avoids the duplicate TTS of a say+finish pair.
+                if (!spokeThisTurn) finishSummary?.takeIf { it.isNotBlank() }?.let { userIo.say(it) }
                 repository.appendMessage(sessionId, Role.USER, resultBlocks, kind = TOOL_RESULT_KIND)
                 bus.emit(AgentEvent.Finished(finishSummary))
                 return

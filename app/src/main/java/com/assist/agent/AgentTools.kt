@@ -177,8 +177,10 @@ object AgentTools {
         ),
         client(
             FINISH,
-            "End the task with a one-line summary. Call this when the task is complete " +
-                "or cannot proceed. Do not call more tools after finishing.",
+            "End the task. `summary` is a one-line status for the log/UI and is NOT " +
+                "spoken aloud — if you want the user to hear the outcome, call `say` " +
+                "first (a brief spoken result), then `finish`. Call finish when the " +
+                "task is complete or cannot proceed. Do not call more tools after.",
             objectSchema(required = listOf("summary"), props = """"summary":{"type":"string"}"""),
         ),
         // --- Context / economy ---

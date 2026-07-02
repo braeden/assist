@@ -27,7 +27,12 @@ data class ScreenState(
 
     /**
      * Compact, token-frugal outline for the LLM. One line per element:
-     * `#id role "text" (desc) [flags] @l,t-r,b`.
+     * `#id role "text" (desc) [flags]`.
+     *
+     * Pixel bounds are deliberately **omitted**: the agent addresses elements by
+     * `#id` (see [ToolRouter]'s tap/scroll/setText tools), so coordinates were pure
+     * token overhead — ~15–20 chars on every one of up to 150 lines per screen.
+     * They remain available in [toJson] / [UiElement.bounds] for gesture geometry.
      */
     fun toOutline(): String = buildString {
         append("app=").append(appPackage.ifEmpty { "?" })
@@ -50,8 +55,6 @@ data class ScreenState(
                 if (!e.enabled) add("disabled")
             }
             if (flags.isNotEmpty()) flags.joinTo(this, separator = ",", prefix = " [", postfix = "]")
-            append(" @").append(e.bounds.left).append(',').append(e.bounds.top)
-                .append('-').append(e.bounds.right).append(',').append(e.bounds.bottom)
             append('\n')
         }
     }

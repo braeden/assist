@@ -177,7 +177,10 @@ class ToolRouter @Inject constructor(
 
     private suspend fun finish(call: ToolCall, args: Args): ToolExecution {
         val summary = args.strOrNull("summary").orEmpty()
-        userIo.say(summary)
+        // NOTE: finish does NOT speak here. The agent loop speaks the summary once,
+        // and only if the model didn't already `say` something this turn — otherwise
+        // a `say(...)` + `finish(...)` pair (a very common completion pattern) would
+        // produce two near-identical TTS outputs. See AgentLoop's finished branch.
         return ToolExecution(
             resultBlock = textResult(call, "Task finished."),
             success = true,

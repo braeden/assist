@@ -4,9 +4,12 @@ import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -14,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.assist.data.AgentModel
 
 /** USD formatting shared across the session screens. */
 fun formatUsd(value: Double): String = when {
@@ -63,6 +67,40 @@ fun FastModeCard(
                 )
             }
             Switch(checked = enabled, onCheckedChange = onToggle)
+        }
+    }
+}
+
+/**
+ * Model selector for the agent loop. Three chips (Sonnet / Opus / Haiku) with a
+ * one-line blurb for the current choice. Takes effect on the next run (the model
+ * is fixed per-run for prompt-cache stability).
+ */
+@Composable
+fun ModelPickerCard(
+    selected: AgentModel,
+    onSelect: (AgentModel) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Model", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AgentModel.entries.forEach { model ->
+                    FilterChip(
+                        selected = model == selected,
+                        onClick = { onSelect(model) },
+                        label = { Text(model.label) },
+                    )
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                selected.blurb,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

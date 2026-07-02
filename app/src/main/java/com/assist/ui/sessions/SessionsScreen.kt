@@ -46,6 +46,7 @@ fun SessionsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val fastMode by settingsViewModel.fastMode.collectAsState()
+    val agentModel by settingsViewModel.agentModel.collectAsState()
 
     var renameTarget by remember { mutableStateOf<SessionRowUi?>(null) }
     var deleteTarget by remember { mutableStateOf<SessionRowUi?>(null) }
@@ -74,6 +75,7 @@ fun SessionsScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Learned tasks") }
             }
+            item { ModelPickerCard(selected = agentModel, onSelect = settingsViewModel::setAgentModel) }
             item { FastModeCard(enabled = fastMode, onToggle = settingsViewModel::setFastMode) }
 
             if (!state.loading && state.rows.isEmpty()) {

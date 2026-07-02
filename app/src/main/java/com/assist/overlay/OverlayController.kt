@@ -8,6 +8,9 @@ import com.assist.data.ContextTracker
 import com.assist.data.SessionEntity
 import com.assist.data.SessionRepository
 import com.assist.di.AppScope
+import com.assist.voice.AudioSessionArbiter
+import com.assist.voice.MicOwner
+import com.assist.voice.SttEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -53,6 +56,8 @@ class OverlayController @Inject constructor(
     private val agentLoop: AgentLoop,
     private val repository: SessionRepository,
     private val contextTracker: ContextTracker,
+    private val stt: SttEngine,
+    private val arbiter: AudioSessionArbiter,
     @AppScope private val scope: CoroutineScope,
 ) {
     private val reducer = OverlayReducer()
@@ -178,6 +183,20 @@ class OverlayController @Inject constructor(
 
     /** Suspends until the next typed reply. Intended to be raced against voice. */
     suspend fun awaitTypedReply(): String = typed.first()
+
+    /**
+     * Dictate a reply: capture one spoken utterance and return the transcript for
+     * the reply field to fill in. Goes through the shared [AudioSessionArbiter] at
+     * [MicOwner.LISTEN_ONCE] so it never contends with the agent's own voice I/O.
+     * Returns null on any recognition failure (no permission, no speech, etc.) so
+     * the UI can simply fall back to typing.
+     */
+    suspend fun dictate(): String? =
+        runCatching {
+            arbiter.withMic(MicOwner.LISTEN_ONCE) { stt.transcribeOnce().text }
+        }.onFailure { Log.w(TAG, "dictation failed: ${it.message}") }
+            .getOrNull()
+            ?.takeIf { it.isNotBlank() }
 
     // --- Internals ----------------------------------------------------------
 

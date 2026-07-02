@@ -1,5 +1,6 @@
 package com.assist.service
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -28,7 +29,7 @@ class ScreenStateRenderingTest {
     )
 
     @Test
-    fun `outline includes ids roles flags and bounds`() {
+    fun `outline includes ids roles and flags but omits bounds`() {
         val outline = state.toOutline()
         assertTrue(outline.contains("app=com.example.app"))
         assertTrue(outline.contains("window=MainActivity"))
@@ -37,7 +38,9 @@ class ScreenStateRenderingTest {
         assertTrue(outline.contains("#1 EditText"))
         assertTrue(outline.contains("(Message)"))
         assertTrue(outline.contains("[edit,focused]"))
-        assertTrue(outline.contains("@10,20-110,80"))
+        // Bounds are intentionally dropped from the outline (token savings) — the
+        // agent addresses elements by #id, not coordinates.
+        assertFalse(outline.contains("@10,20-110,80"))
     }
 
     @Test

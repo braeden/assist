@@ -6,10 +6,45 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Small persisted user preferences (phase-12). Currently just the **Fast mode**
- * toggle: when on, the agent loop requests Anthropic fast mode (Opus 4.8/4.7),
- * which needs research-preview access and is billed at premium pricing. Default
- * OFF. Kept tiny and separate from [SecretStore] (no encryption needed).
+ * Which Claude model the agent loop drives the phone with. The default is
+ * [SONNET] — capable enough for on-device automation at ~40% lower per-token cost
+ * than Opus. The user can bump to [OPUS] for tricky screens or drop to [HAIKU] for
+ * the cheapest/fastest runs. Chosen once per run (switching mid-run would bust the
+ * prompt cache), read from [SettingsStore.getAgentModel].
+ */
+enum class AgentModel(val modelId: String, val label: String, val blurb: String) {
+    SONNET(
+        modelId = "claude-sonnet-5",
+        label = "Sonnet 5",
+        blurb = "Balanced default — capable and ~40% cheaper per token than Opus.",
+    ),
+    OPUS(
+        modelId = "claude-opus-4-8",
+        label = "Opus 4.8",
+        blurb = "Most capable. Best on ambiguous screens and long tasks. Highest cost.",
+    ),
+    HAIKU(
+        modelId = "claude-haiku-4-5",
+        label = "Haiku 4.5",
+        blurb = "Fastest and cheapest (~80% less). May miss on complex UIs.",
+    ),
+    ;
+
+    companion object {
+        val DEFAULT = SONNET
+
+        fun fromName(name: String?): AgentModel =
+            entries.firstOrNull { it.name == name } ?: DEFAULT
+    }
+}
+
+/**
+ * Small persisted user preferences (phase-12). Holds the **Fast mode** toggle and
+ * the agent **model** selection. Kept tiny and separate from [SecretStore] (no
+ * encryption needed).
+ *
+ * Fast mode: when on, the agent loop requests Anthropic fast mode (Opus 4.8/4.7),
+ * which needs research-preview access and is billed at premium pricing. Default OFF.
  */
 interface SettingsStore {
     fun isFastModeEnabled(): Boolean
@@ -17,12 +52,20 @@ interface SettingsStore {
 
     /** Observable for UI; emits the current value immediately. */
     val fastMode: StateFlow<Boolean>
+
+    fun getAgentModel(): AgentModel
+    fun setAgentModel(model: AgentModel)
+
+    /** Observable for UI; emits the current value immediately. */
+    val agentModel: StateFlow<AgentModel>
 }
 
 class PrefsSettingsStore(context: Context) : SettingsStore {
 
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val _fastMode = MutableStateFlow(prefs.getBoolean(KEY_FAST_MODE, false))
+    private val _agentModel =
+        MutableStateFlow(AgentModel.fromName(prefs.getString(KEY_MODEL, null)))
 
     override val fastMode: StateFlow<Boolean> = _fastMode.asStateFlow()
 
@@ -33,8 +76,18 @@ class PrefsSettingsStore(context: Context) : SettingsStore {
         _fastMode.value = enabled
     }
 
+    override val agentModel: StateFlow<AgentModel> = _agentModel.asStateFlow()
+
+    override fun getAgentModel(): AgentModel = _agentModel.value
+
+    override fun setAgentModel(model: AgentModel) {
+        prefs.edit().putString(KEY_MODEL, model.name).apply()
+        _agentModel.value = model
+    }
+
     private companion object {
         const val PREFS = "assist_settings"
         const val KEY_FAST_MODE = "fast_mode_enabled"
+        const val KEY_MODEL = "agent_model"
     }
 }
