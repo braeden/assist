@@ -305,16 +305,35 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   overlay draw-over against a benign app (Clock), not those Settings screens.
 
 
+### Phase 07 + 08 integration ✅
+- Merged overlay (07) + voice (08) to `main`; wired the overlay
+  `TypedReplySource`/`awaitTypedReply()` into `VoiceUserIo.ask()` via
+  `di/VoiceOverlayModule` (`OverlayController` injected as a `Provider` to break the
+  `OverlayController → AgentLoop → UserIo → TypedReplySource` Dagger cycle).
+- Wired the onboarding **Start session** button: intent dialog →
+  `AgentService.runIntent` (+ auto-show overlay). Verified on-device end-to-end.
+
+### Phase 12 — Session UI + learned memory ✅ (merged + nav wired)
+- Merged `com.assist.ui.sessions` (sessions list / transcript+context / recipes),
+  `com.assist.memory.MemoryStore` (path-traversal-safe; memory tool in the **live**
+  catalog + routed in `ToolRouter`), `data.TaskRecipeEntity`/`TaskMemoryRepository`,
+  `CostCalculator` fast rows, fast-mode `SettingsStore`+toggle. **Real Room
+  `Migration(1,2)`** (sessions preserved, not destructive; `exportSchema` on,
+  `app/schemas/` committed). 163 unit tests green.
+- **Nav shell:** `MainActivity` now hosts a bottom `NavigationBar` (Home / Sessions
+  / Memory) over a `NavHost` (`home`, `sessions`, `session/{id}`, `recipes`). Added
+  `androidx.navigation:navigation-compose` + `material-icons-core`. Verified
+  on-device: Sessions lists the real run ("…2 minute timer · 15 msgs · $0.17"),
+  transcript + Context&cost panel render.
+
 ### Next
-- **Integrate 07 + 08:** merge overlay + voice to `main`; wire the overlay
-  `TypedReplySource`/`awaitTypedReply()` into `VoiceUserIo.ask()` (race typed vs
-  spoken). Later: unify `AgentService`+`OverlayService` into one coordinated FGS.
-- **Phase 12 (in flight)** — session management UI (list/switch/transcript/context)
-  + learned task memory (`MemoryStore` + memory tool + `TaskRecipe` index).
+- **Phase 13 — CI & infra** (spec in `.claude/phases/phase-13-ci-infra.md`): now
+  clear to run (12 has landed; build files + Room schema are settled).
 - **Phase 09 (wake word)** — Porcupine/openWakeWord `WakeWordDetector` in an FGS,
   coordinated via the shared `AudioSessionArbiter`.
-- **Phase 12** (task memory / fast-mode UI / `SessionSteering` barge-in) queued as a
-  follow-on building on the seams landed in 06.
+- **Follow-ups:** unify `AgentService`+`OverlayService` into one coordinated FGS;
+  `SessionSteering` barge-in/budget wiring; `AgentService` optional existing-
+  `sessionId` for one-tap session resume.
 
 ## Notes / gotchas
 - Homebrew `openjdk@17` won't bottle on this machine (needs full Xcode); used a
