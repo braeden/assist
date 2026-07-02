@@ -24,4 +24,8 @@
     <string name="api_key_absent">No key stored yet.</string>
 
     <string name="start_session">Start session</string>
+
+    <!-- Accessibility service (phase-03) -->
+    <string name="accessibility_service_description">Assist reads the screen and performs taps, swipes, and text entry so the AI agent can operate your phone on your behalf.</string>
+    <string name="accessibility_service_summary">Lets Assist perceive and control the screen for the AI agent.</string>
 </resources>
