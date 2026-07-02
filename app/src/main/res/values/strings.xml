@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Assist</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Assist</string>
+    <string name="onboarding_subtitle">On-device AI phone agent</string>
+    <string name="permissions_header">Permissions</string>
+    <string name="perm_accessibility">Accessibility service</string>
+    <string name="perm_accessibility_desc">Lets Assist read the screen and perform gestures</string>
+    <string name="perm_overlay">Display over other apps</string>
+    <string name="perm_overlay_desc">Shows the live agent conversation overlay</string>
+    <string name="perm_microphone">Microphone</string>
+    <string name="perm_microphone_desc">Voice commands and replies</string>
+    <string name="perm_notifications">Notifications</string>
+    <string name="perm_notifications_desc">Required for the foreground overlay service</string>
+    <string name="status_granted">Granted</string>
+    <string name="status_missing">Grant</string>
+
+    <string name="api_key_header">Anthropic API key</string>
+    <string name="api_key_hint">sk-ant-…</string>
+    <string name="api_key_save">Save key</string>
+    <string name="api_key_saved">Key saved (encrypted on device)</string>
+    <string name="api_key_present">A key is stored. Paste again to replace it.</string>
+    <string name="api_key_absent">No key stored yet.</string>
+
+    <string name="start_session">Start session</string>
+</resources>

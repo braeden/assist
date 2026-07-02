@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Overlay window to show the agent<->user exchange (phase-07). -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Microphone for voice input (phase-08). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Notifications for the foreground overlay service (Android 13+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Foreground service hosting the overlay + agent loop (phase-07). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- open_app + label resolution needs to enumerate installed launcher apps. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <application
+        android:name=".AssistApplication"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Assist">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Assist">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- ===================================================================
+             Placeholder registrations filled in by later phases. Kept here so
+             the manifest merge and package layout are stable across the fan-out.
+
+             phase-03 — AccessibilityService (com.assist.service.AssistAccessibilityService):
+             <service
+                 android:name=".service.AssistAccessibilityService"
+                 android:exported="false"
+                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+                 <intent-filter>
+                     <action android:name="android.accessibilityservice.AccessibilityService" />
+                 </intent-filter>
+                 <meta-data
+                     android:name="android.accessibilityservice"
+                     android:resource="@xml/accessibility_service_config" />
+             </service>
+
+             phase-07 — overlay foreground service (com.assist.overlay.OverlayService):
+             <service
+                 android:name=".overlay.OverlayService"
+                 android:exported="false"
+                 android:foregroundServiceType="specialUse">
+                 <property
+                     android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                     android:value="on-device AI phone agent overlay" />
+             </service>
+             =================================================================== -->
+
+    </application>
+
+</manifest>
