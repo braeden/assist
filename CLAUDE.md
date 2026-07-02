@@ -175,6 +175,26 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   APIs, cloud STT/TTS, OpenAI/Gemini realtime duplex, or on-device libs. Phase-08/09
   specs wired to it.
 
+### Phase 11 — Device deploy & debug (Pixel 7 Pro) ✅
+- New device scripts, all sourcing `env.sh` + honoring `ANDROID_SERIAL`, artifacts
+  to gitignored `captures/`: `deploy-pixel.sh` (one-command build+install+launch
+  via Gradle `runApp`; `--a11y`), `pair-device.sh` (Wi-Fi `pair`/`connect`/`usb`
+  wireless debugging — no IPs baked in), `dump-a11y.sh` (fires the phase-03
+  `com.assist.DEBUG_DUMP_SCREEN` broadcast + prints the logged outline;
+  `--screenshot/--open/--tap/--swipe/--key`), `screenshot.sh` (`exec-out
+  screencap`), `bugreport.sh` (`full`/`--anr`/`--logcat`). Enhanced `devices.sh`
+  to emit copy-ready `export ANDROID_SERIAL=…` lines per online device.
+- **`DEVICE.md`**: fresh-Pixel first-run walkthrough — Developer Options + USB
+  debugging, USB/Wi-Fi connect, one-command deploy, the human permission grants
+  (Accessibility "full control", overlay, mic, notifications), reading logs
+  (tag table incl. future `AgentLoop`), crash symbolication (pure-JVM, no NDK;
+  minify off), real-app validation checklist (Clock/Messages/Maps/Gmail) + the
+  flagship "find my next flight and start navigation" eval, release-ish signing
+  notes (debug keystore is the sideload path; optional gitignored `*.jks`).
+- README updated with the device workflow + helper table pointing at `DEVICE.md`.
+- No app source / Gradle changes; deploy uses the existing `runApp` task and the
+  default debug keystore. All scripts pass `bash -n`.
+
 ### Next
 - **Phase 07 (overlay)** and **08 (voice)** run in parallel — both consume
   `AgentEventBus`; 08 provides the real `UserIo` + implements the `android`
