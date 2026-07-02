@@ -216,10 +216,54 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   implicit broadcast is dropped on API 35. Reinstalling also unbinds the
   accessibility service — re-enable it before an e2e run.
 
+### Phase 07 — Overlay UI (interaction viz + interrupt) ✅
+- **`com.assist.overlay`**: `OverlayService` (own `specialUse` FGS) adds a Compose
+  overlay to `WindowManager` via `TYPE_APPLICATION_OVERLAY` +
+  `FLAG_NOT_FOCUSABLE|NOT_TOUCH_MODAL` (driven app keeps input), toggling focusable
+  only while capturing a typed reply; draggable; add/remove + focus/move via
+  `WindowManager`. `OverlayLifecycleOwner` (manual Lifecycle/SavedStateRegistry/
+  ViewModelStore) hosts the `ComposeView`.
+- **`OverlayController`** (`@Singleton`, `@Inject`): collects the phase-06
+  `AgentEventBus` into `StateFlow<OverlayUiState>` via a pure, unit-tested
+  `OverlayReducer`; a leading+trailing `throttleLatest` coalesces high-frequency
+  text deltas (snapshots are cumulative, so nothing is lost). DB-backed HUD refresh
+  (`ContextTracker`); session controls (new/switch via `SessionRepository`),
+  compact-now (`summarizeAndCompact`) / drop-screenshots-now
+  (`markScreenshotsDropped`); interrupt → `AgentLoop.interrupt()`.
+- **Typed-reply seam (for `voice/VoiceUserIo.ask()` merge):** the overlay never
+  edits `UserIo`. It exposes `submitReply(text)` (UI/confirmation Yes-No),
+  `suspend awaitTypedReply(): String`, and `typedReplies: Flow<String>`. Merge
+  wiring should race `awaitTypedReply()` against speech in `VoiceUserIo.ask()`
+  ("whichever returns first") — same adapter pattern as `SystemPromptProvider`.
+- **Compose content**: draggable collapsed **bubble** (idle/listening/thinking/
+  speaking/acting + stop affordance) and expanded **panel** (streaming assistant
+  text, ordered `tool_call` chips w/ args + ✓/✗, thinking indicator, Yes/No
+  confirmation → reply seam, HUD = context used/window + cost + screenshot count).
+- **MainActivity/OnboardingScreen**: additive `OverlayCard` start/stops
+  `OverlayService`, gated on the existing overlay permission. Manifest registers
+  `OverlayService`; additive strings. No edits to `AgentService`/`AppModule`/
+  `AgentModule`; no `OverlayModule` needed (all deps constructor-injectable).
+- **FGS unification (integration point):** ships as its own `specialUse` FGS
+  mirroring `AgentService`; both share the singleton `AgentEventBus` in-process.
+  Intended to later merge into ONE coordinated FGS + notification — call-out for
+  the merge; `AgentService` untouched here.
+- **18 new unit tests** (OverlayReducer 10 — ordering/tool-chip results/HUD math;
+  Throttle 4 — leading+trailing, no-drop; OverlayController 4 — event fold + HUD
+  refresh + reply seam). Full suite **97 tests green**; `:app:assembleDebug` green.
+- **Live on `emulator-5554`:** overlay draws over Clock (bubble + panel) while
+  Clock stays the resumed/focused app (`fl=NOT_FOCUSABLE NOT_TOUCH_MODAL`); during
+  a real `DEBUG_RUN` ("start a 2 minute timer", live opus-4-8) the panel streamed
+  assistant text, showed the `open_app` ✓ chip, and the HUD read `2k/1.0M ctx ·
+  $0.1096 · 0 shots`; the session list rendered real Room sessions. **Gotcha:**
+  some Settings sub-pages set `HIDE_NON_SYSTEM_OVERLAY_WINDOWS`
+  (`mForceHideNonSystemOverlayWindow=true`), which force-hides SAW overlays — test
+  overlay draw-over against a benign app (Clock), not those Settings screens.
+
 ### Next
-- **Phase 07 (overlay)** and **08 (voice)** run in parallel — both consume
-  `AgentEventBus`; 08 provides the real `UserIo` + implements the `android`
-  `VoiceProvider` from `.claude/voice-architecture.md`.
+- **Phase 08 (voice)** consumes `AgentEventBus`; provides the real `UserIo` +
+  implements the `android` `VoiceProvider` from `.claude/voice-architecture.md`.
+  At merge, wire the overlay typed-reply seam into `VoiceUserIo.ask()` and
+  consider unifying `OverlayService`+`AgentService` into one coordinated FGS.
 - **Phase 12** (task memory / fast-mode UI / `SessionSteering` barge-in) queued as a
   follow-on building on the seams landed in 06.
 
