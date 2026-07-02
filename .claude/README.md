@@ -36,6 +36,7 @@ lists its **Prerequisites**, exact **Deliverables** (file paths + interfaces),
 | 10 | [System prompt](phases/phase-10-system-prompt.md) | 04 | anytime |
 | 11 | [Device deploy & debug](phases/phase-11-device-deploy.md) | 01 | anytime after 02 |
 | 12 | [Task memory, fast mode & steering](phases/phase-12-task-memory-fast-mode.md) | 04, 05, 06 | 07, 08 |
+| 13 | [CI & project infrastructure](phases/phase-13-ci-infra.md) | — (tooling) | anytime; best after 12 |
 
 ## Handoff / parallelization plan
 
