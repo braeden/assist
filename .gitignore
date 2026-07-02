@@ -22,3 +22,6 @@ secrets.properties
 # Misc
 *.log
 /tmp/
+
+# git worktrees created for parallel subagents
+.claude/worktrees/

@@ -195,6 +195,27 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
 - No app source / Gradle changes; deploy uses the existing `runApp` task and the
   default debug keystore. All scripts pass `bash -n`.
 
+### Integration — 06 spine + 10 + 11 → `main` ✅
+- Merged all three worktree branches (`--no-ff`). Conflicts were only the manifest
+  (INTERNET comment — both sides had re-added the permission) and `CLAUDE.md`
+  (union-resolved to keep every phase section).
+- **`SystemPromptProvider` reconciliation:** the spine's `AgentLoop` consumes
+  `agent.SystemPromptProvider(SystemPromptContext)`; phase-10 shipped the real
+  prompt as `prompt.SystemPromptProvider(PromptContext)`. Bridged with
+  `agent.Phase10SystemPromptProvider` (adapter, `@Inject` the phase-10 provider,
+  maps `deviceInfo`→`deviceModel`); `AgentModule` now provides the adapter instead
+  of `PlaceholderSystemPromptProvider`. User intent stays out of the system core
+  (it's in the first user turn) so the cacheable prefix is byte-stable.
+- **Verified on merged `main`:** `:app:assembleDebug` + `:app:testDebugUnitTest`
+  green (**79 tests**, 0 fail); 6-module Hilt graph (App/Service/Llm/Data/Agent/
+  Prompt) resolves; app launches with no crash. **Live e2e** (`DEBUG_RUN` "open the
+  Clock app and start a 1 minute timer") completed in 8 steps with the *real*
+  phase-10 prompt — a 1-minute timer counts down on-screen.
+- **Gotcha:** the `DEBUG_RUN` broadcast must target the package
+  (`am broadcast -p com.assist -a com.assist.DEBUG_RUN --es intent "…"`); an
+  implicit broadcast is dropped on API 35. Reinstalling also unbinds the
+  accessibility service — re-enable it before an e2e run.
+
 ### Next
 - **Phase 07 (overlay)** and **08 (voice)** run in parallel — both consume
   `AgentEventBus`; 08 provides the real `UserIo` + implements the `android`
