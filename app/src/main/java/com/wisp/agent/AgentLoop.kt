@@ -135,8 +135,6 @@ class AgentLoop
                 },
             )
 
-            val tools = AgentTools.catalog()
-            val toolNames = tools.map { it.name }
             var pendingContext: ContextManagement? = null
             val progress = NoProgressTracker()
             var step = 0
@@ -168,6 +166,19 @@ class AgentLoop
                     } else {
                         Speed.STANDARD
                     }
+                // Per-model: server tools (web_search/web_fetch/advisor) vary by
+                // model support. Stable within a model, so cache-safe.
+                val tools = AgentTools.catalog(model)
+                val toolNames = tools.map { it.name }
+                // A mid-session model swap can strand server-tool activity from a
+                // tool the new model doesn't get (e.g. advisor results after
+                // sonnet→opus) — prune it rather than let the request 400.
+                val messages =
+                    ServerToolPruner.prune(
+                        json,
+                        repository.buildLlmMessages(sessionId),
+                        toolNames.toSet(),
+                    )
                 val request =
                     LlmRequest(
                         model = model,
@@ -175,7 +186,7 @@ class AgentLoop
                             promptProvider.system(
                                 SystemPromptContext(sessionId, userIntent, toolNames),
                             ),
-                        messages = repository.buildLlmMessages(sessionId),
+                        messages = messages,
                         tools = tools,
                         maxTokens = MAX_TOKENS,
                         effort = Effort.MEDIUM,
@@ -196,6 +207,14 @@ class AgentLoop
                 bus.emit(AgentEvent.UsageUpdated(response.usage))
 
                 if (response.toolCalls.isEmpty()) {
+                    // Server tools (web search/fetch, advisor) run inside the
+                    // provider's own loop; pause_turn means it hit its iteration
+                    // cap. The assistant turn is already persisted — re-sending
+                    // resumes the server-side work where it left off.
+                    if (response.stopReason == PAUSE_TURN) {
+                        Log.i(TAG, "pause_turn — resuming server-tool turn")
+                        continue
+                    }
                     // No tool calls: the model is done (or just talking). Treat as
                     // finish; skip TTS if a `say` already delivered the outcome.
                     val summary = response.text.ifBlank { null }
@@ -331,11 +350,15 @@ class AgentLoop
             call: ToolCall,
             latestScreen: ScreenState,
         ): ToolExecution {
+            if (call.name == AgentTools.PERFORM_ACTIONS) {
+                return executeBatch(sessionId, call, latestScreen)
+            }
             val gateInput = buildGateInput(call, latestScreen)
             val decision = actionGate.classify(gateInput)
             if (decision.gated) {
                 val proceed = actionGate.confirm(gateInput, userIo, bus)
                 if (!proceed) {
+                    val label = decision.category?.label ?: "action"
                     return ToolExecution(
                         resultBlock =
                             ContentBlock.ToolResult(
@@ -343,7 +366,7 @@ class AgentLoop
                                 content =
                                     listOf(
                                         ContentBlock.Text(
-                                            "The user declined this ${decision.category?.label ?: "action"}. " +
+                                            "The user declined this $label. " +
                                                 "Do not retry it; consider an alternative or ask the user.",
                                         ),
                                     ),
@@ -356,6 +379,96 @@ class AgentLoop
             }
             return router.execute(sessionId, call)
         }
+
+        /**
+         * Run a `perform_actions` batch: gate + execute each sub-action in order
+         * (so a gated `tap` inside a batch still asks for confirmation), stop at
+         * the first failure/decline, and fold everything into one `tool_result`
+         * for the batch's own tool_use id. Sub-actions emit their own
+         * ToolCallStarted/Finished events so the overlay shows live progress, but
+         * only the batch call itself is persisted by the main loop. The screen is
+         * deliberately NOT re-captured between actions — element ids stay bound to
+         * the frame the model chose them from (that is the contract in the tool
+         * description: batch only same-screen bursts).
+         */
+        private suspend fun executeBatch(
+            sessionId: Long,
+            call: ToolCall,
+            latestScreen: ScreenState,
+        ): ToolExecution {
+            val actions =
+                BatchActionParser.parse(json, call.argumentsJson)?.takeIf { it.isNotEmpty() }
+                    ?: return batchResult(
+                        call,
+                        "perform_actions needs a non-empty `actions` array of {tool, args}.",
+                        success = false,
+                        acted = false,
+                        message = "batch: malformed actions",
+                    )
+            actions.firstOrNull { it.tool !in AgentTools.BATCHABLE }?.let { bad ->
+                return batchResult(
+                    call,
+                    "Tool '${bad.tool}' cannot be batched. Batchable tools: " +
+                        AgentTools.BATCHABLE.joinToString(", ") + ".",
+                    success = false,
+                    acted = false,
+                    message = "batch: unbatchable tool '${bad.tool}'",
+                )
+            }
+
+            val lines = mutableListOf<String>()
+            var acted = false
+            for ((index, action) in actions.withIndex()) {
+                coroutineContext.ensureActive()
+                val sub = ToolCall("${call.id}_$index", action.tool, action.argsJson)
+                bus.emit(AgentEvent.ToolCallStarted(sub.id, sub.name, sub.argumentsJson))
+                val exec = gateAndExecute(sessionId, sub, latestScreen)
+                bus.emit(
+                    AgentEvent.ToolCallFinished(sub.id, sub.name, exec.success, exec.message),
+                )
+                acted = acted || exec.didAct
+                lines += "${index + 1}. ${action.tool}: ${if (exec.success) "ok" else "FAILED"}" +
+                    " — ${exec.message}"
+                if (!exec.success) {
+                    lines += "Stopped at action ${index + 1} of ${actions.size}; " +
+                        "the remaining actions were not run."
+                    return batchResult(
+                        call,
+                        lines.joinToString("\n"),
+                        success = false,
+                        acted = acted,
+                        message = "batch stopped at ${index + 1}/${actions.size}: ${exec.message}",
+                    )
+                }
+                if (exec.didAct && index < actions.lastIndex) delay(BATCH_INTER_ACTION_MS)
+            }
+            return batchResult(
+                call,
+                lines.joinToString("\n"),
+                success = true,
+                acted = acted,
+                message = "batch: ${actions.size} actions ok",
+            )
+        }
+
+        private fun batchResult(
+            call: ToolCall,
+            text: String,
+            success: Boolean,
+            acted: Boolean,
+            message: String,
+        ): ToolExecution =
+            ToolExecution(
+                resultBlock =
+                    ContentBlock.ToolResult(
+                        toolUseId = call.id,
+                        content = listOf(ContentBlock.Text(text)),
+                        isError = !success,
+                    ),
+                success = success,
+                message = message,
+                didAct = acted,
+            )
 
         private fun buildGateInput(
             call: ToolCall,
@@ -480,6 +593,12 @@ class AgentLoop
             private const val MAX_TOKENS = 4096
             private const val SETTLE_TIMEOUT_MS = 1500L
             private const val SETTLE_DEBOUNCE_MS = 300L
+
+            /** Breather between batched actions so ripples/IME keep up. */
+            private const val BATCH_INTER_ACTION_MS = 150L
+
+            /** Provider stop reason: server-tool loop paused; re-send to resume. */
+            private const val PAUSE_TURN = "pause_turn"
             private const val CONTEXT_CEILING_TOKENS = 300_000
             private const val TOOL_RESULT_KIND = com.wisp.data.MessageKind.TOOL_RESULT
         }

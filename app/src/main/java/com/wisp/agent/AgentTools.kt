@@ -29,6 +29,7 @@ object AgentTools {
     const val PRESS_KEY = "press_key"
     const val OPEN_APP = "open_app"
     const val WAIT = "wait"
+    const val PERFORM_ACTIONS = "perform_actions"
 
     // User interaction
     const val SAY = "say"
@@ -44,8 +45,88 @@ object AgentTools {
     const val MEMORY = "memory"
     const val MEMORY_TYPE = "memory_20250818"
 
-    /** The full catalog advertised to the model, in a stable order (cache-friendly). */
-    fun catalog(): List<ToolSpec> =
+    // Anthropic server tools (executed on Anthropic's side; results arrive as
+    // provider-owned content blocks — never routed through ToolRouter).
+    const val WEB_SEARCH = "web_search"
+    const val WEB_SEARCH_TYPE = "web_search_20260209"
+    const val WEB_SEARCH_TYPE_BASIC = "web_search_20250305"
+    const val WEB_FETCH = "web_fetch"
+    const val WEB_FETCH_TYPE = "web_fetch_20260209"
+    const val ADVISOR = "advisor"
+    const val ADVISOR_TYPE = "advisor_20260301"
+
+    /** The advisor tool always consults Opus (must be ≥ the executor model). */
+    const val ADVISOR_MODEL = "claude-opus-4-8"
+
+    /** Model prefixes that support the `_20260209` web tools (dynamic filtering). */
+    private val DYNAMIC_WEB_TOOL_MODEL_PREFIXES =
+        listOf(
+            "claude-opus-4-6",
+            "claude-opus-4-7",
+            "claude-opus-4-8",
+            "claude-sonnet-5",
+            "claude-sonnet-4-6",
+        )
+
+    /** Executor-model prefixes that get the advisor tool (pointed at Opus). */
+    private val ADVISOR_EXECUTOR_PREFIXES = listOf("claude-sonnet-", "claude-haiku-")
+
+    /**
+     * Control tools allowed inside a [PERFORM_ACTIONS] batch. Perception, user
+     * interaction, context, and memory tools are excluded on purpose: they either
+     * return rich payloads (screens/screenshots), block on the user, or edit the
+     * conversation — none of which compose into one aggregated `tool_result`.
+     */
+    val BATCHABLE: Set<String> =
+        setOf(
+            TAP,
+            TAP_XY,
+            LONG_PRESS,
+            LONG_PRESS_XY,
+            SWIPE,
+            SWIPE_XY,
+            SCROLL,
+            SET_TEXT,
+            PRESS_KEY,
+            OPEN_APP,
+            WAIT,
+        )
+
+    /**
+     * The full catalog advertised to the model, in a stable order
+     * (cache-friendly). When [model] is given, Anthropic server tools that the
+     * model supports are appended: web_search + web_fetch (`_20260209` on
+     * Opus 4.6+/Sonnet 4.6+/Sonnet 5; basic web_search on Haiku), and the
+     * advisor tool — pointed at Opus — only for sonnet/haiku executors (Opus
+     * consulting Opus adds cost without capability). The set varies only by
+     * model, so it never busts the prompt cache mid-session (caches are
+     * model-scoped anyway).
+     */
+    fun catalog(model: String? = null): List<ToolSpec> = baseCatalog() + serverTools(model)
+
+    private fun serverTools(model: String?): List<ToolSpec> {
+        if (model == null) return emptyList()
+        val tools = mutableListOf<ToolSpec>()
+        if (DYNAMIC_WEB_TOOL_MODEL_PREFIXES.any { model.startsWith(it) }) {
+            tools += ToolSpec.ProviderTool(type = WEB_SEARCH_TYPE, name = WEB_SEARCH)
+            tools += ToolSpec.ProviderTool(type = WEB_FETCH_TYPE, name = WEB_FETCH)
+        } else if (model.startsWith("claude-haiku-")) {
+            // Haiku predates the dynamic-filtering variants; basic search only
+            // (basic web_fetch still sits behind a beta we don't request).
+            tools += ToolSpec.ProviderTool(type = WEB_SEARCH_TYPE_BASIC, name = WEB_SEARCH)
+        }
+        if (ADVISOR_EXECUTOR_PREFIXES.any { model.startsWith(it) }) {
+            tools +=
+                ToolSpec.ProviderTool(
+                    type = ADVISOR_TYPE,
+                    name = ADVISOR,
+                    model = ADVISOR_MODEL,
+                )
+        }
+        return tools
+    }
+
+    private fun baseCatalog(): List<ToolSpec> =
         listOf(
             // --- Perception & control ---
             client(
@@ -165,6 +246,28 @@ object AgentTools {
                 objectSchema(
                     required = listOf("ms"),
                     props = """"ms":{"type":"integer","minimum":0}""",
+                ),
+            ),
+            client(
+                PERFORM_ACTIONS,
+                "Perform a short sequence of control actions in one call, in order, " +
+                    "stopping at the first failure. Use for bursts on the SAME stable " +
+                    "screen (keypad/PIN digits, filling several form fields, " +
+                    "type-then-enter). Element ids must all come from the latest " +
+                    "outline — if an action navigates or changes the screen, later " +
+                    "element_id actions may miss; use separate calls instead. Each " +
+                    "action is {tool, args} using that tool's own arguments (insert a " +
+                    "wait action if the UI needs time between steps).",
+                objectSchema(
+                    required = listOf("actions"),
+                    props =
+                        """"actions":{"type":"array","minItems":1,"maxItems":10,""" +
+                            """"items":{"type":"object","properties":{""" +
+                            """"tool":{"type":"string","enum":["tap","tap_xy","long_press",""" +
+                            """"long_press_xy","swipe","swipe_xy","scroll","set_text",""" +
+                            """"press_key","open_app","wait"]},""" +
+                            """"args":{"type":"object"}},""" +
+                            """"required":["tool","args"]}}""",
                 ),
             ),
             // --- User interaction ---

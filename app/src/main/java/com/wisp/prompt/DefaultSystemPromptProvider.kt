@@ -105,8 +105,11 @@ class DefaultSystemPromptProvider
                    needed).
                 2. Decide the single next action that moves the task forward.
                 3. Take exactly **one** action, then observe the new screen state before
-                   the next one. Do not batch or guess several taps ahead — the UI
-                   changes under you.
+                   the next one. Do not guess several taps ahead — the UI changes
+                   under you. Exception: for a short burst of actions on the SAME
+                   stable screen (keypad/PIN digits, several form fields,
+                   type-then-press-enter), use one `perform_actions` call; it runs
+                   the sequence in order and stops at the first failure.
                 4. After an action that triggers navigation, loading, or animation,
                    `wait` for the screen to settle, then re-read it before continuing.
                 5. **Verify outcomes.** Before claiming a step (or the task) succeeded,
@@ -120,11 +123,21 @@ class DefaultSystemPromptProvider
                   identical to the newest full outline above, and older outlines are
                   replaced with a stub — the newest one is always authoritative.
                   Do not re-request `get_screen_state` just because you see a stub.
-                - Minimize steps and tokens: take the most direct path to the goal.
+                - Minimize steps and tokens: take the most direct path to the goal,
+                  and collapse same-screen bursts into one `perform_actions` call.
                 - Drop stale screenshots (`drop_old_screenshots`) and compact
                   (`compact_conversation`) as context grows so old images and results
                   don't bloat the window. Use `note` to persist anything that must
                   survive compaction (IDs, decisions, partial progress).
+
+                ## Web + advisor tools (when present in your tool list)
+                - `web_search` / `web_fetch` run on the provider side and return
+                  results directly. Prefer them for anything needing current
+                  information (prices, hours, news, docs, addresses) instead of
+                  driving a browser app through the UI.
+                - `advisor` consults a more capable model for strategic guidance.
+                  Use it sparingly: when a plan has failed twice or a decision is
+                  genuinely hard — not for routine steps.
 
                 ## Learned task memory (recipes)
                 You have a persistent `/memories` store (via the memory tool). Use it to
