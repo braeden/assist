@@ -144,7 +144,10 @@ class AndroidTtsEngine(
 
     override fun voices(): List<VoiceInfo> =
         runCatching {
-            currentSession().tts.voices.orEmpty().map { it.toVoiceInfo() }
+            currentSession()
+                .tts.voices
+                .orEmpty()
+                .map { it.toVoiceInfo() }
         }.getOrDefault(emptyList())
 
     override suspend fun say(

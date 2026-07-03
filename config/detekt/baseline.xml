@@ -50,7 +50,7 @@
     <ID>FunctionNaming:VoiceTestScreen.kt$@Composable fun VoiceTestScreen(viewModel: VoiceTestViewModel = hiltViewModel())</ID>
     <ID>InstanceOfCheckForException:BargeInDetector.kt$BargeInDetector$t is kotlinx.coroutines.CancellationException</ID>
     <ID>LongMethod:AgentLoop.kt$AgentLoop$private suspend fun runLoop( sessionId: Long, userIntent: String, )</ID>
-    <ID>LongMethod:AgentTools.kt$AgentTools$fun catalog(): List&lt;ToolSpec&gt;</ID>
+    <ID>LongMethod:AgentTools.kt$AgentTools$private fun baseCatalog(): List&lt;ToolSpec&gt;</ID>
     <ID>LongMethod:AnthropicLlmClient.kt$AnthropicLlmClient$private fun handleEvent( event: JsonObject, acc: StreamAccumulator, onEvent: (LlmStreamEvent) -&gt; Unit, )</ID>
     <ID>LongMethod:OverlayContent.kt$@Composable private fun Bubble( state: OverlayUiState, dictating: Boolean, onTap: () -&gt; Unit, onInterrupt: () -&gt; Unit, onRecordNewMessage: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, )</ID>
     <ID>LongMethod:OverlayContent.kt$@Composable private fun Panel( state: OverlayUiState, sessions: List&lt;SessionEntity&gt;, dictating: Boolean, onCollapse: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, onInterrupt: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onNewSession: () -&gt; Unit, onSwitchSession: (Long) -&gt; Unit, onSubmitReply: (String) -&gt; Unit, onDictate: suspend () -&gt; String?, onStop: () -&gt; Unit, )</ID>
@@ -153,6 +153,8 @@
     <ID>ReturnCount:ActionGate.kt$ActionGate.Companion$private fun String.containsWord(word: String): Boolean</ID>
     <ID>ReturnCount:AgentLoop.kt$AgentLoop$private fun mergeContext( a: ContextManagement?, b: ContextManagement?, ): ContextManagement?</ID>
     <ID>ReturnCount:AgentLoop.kt$AgentLoop$private suspend fun runLoop( sessionId: Long, userIntent: String, )</ID>
+    <ID>ReturnCount:AgentLoop.kt$AgentLoop$private suspend fun gateAndExecute( sessionId: Long, call: ToolCall, latestScreen: ScreenState, ): ToolExecution</ID>
+    <ID>ReturnCount:AgentLoop.kt$AgentLoop$private suspend fun executeBatch( sessionId: Long, call: ToolCall, latestScreen: ScreenState, ): ToolExecution</ID>
     <ID>ReturnCount:AndroidTtsEngine.kt$AndroidTtsEngine$override suspend fun say( text: String, opts: SpeakOptions, )</ID>
     <ID>ReturnCount:AnthropicLlmClient.kt$AnthropicLlmClient$private fun handleEvent( event: JsonObject, acc: StreamAccumulator, onEvent: (LlmStreamEvent) -&gt; Unit, )</ID>
     <ID>ReturnCount:AppResolver.kt$AppResolver$fun resolve( query: String, apps: List&lt;InstalledApp&gt;, ): String?</ID>

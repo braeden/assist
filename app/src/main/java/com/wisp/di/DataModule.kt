@@ -2,7 +2,6 @@ package com.wisp.di
 
 import android.content.Context
 import androidx.room.Room
-import com.wisp.data.WispDatabase
 import com.wisp.data.ContextTracker
 import com.wisp.data.CostCalculator
 import com.wisp.data.PrefsSettingsStore
@@ -11,6 +10,7 @@ import com.wisp.data.SessionRepository
 import com.wisp.data.SettingsStore
 import com.wisp.data.TaskMemoryRepository
 import com.wisp.data.TaskRecipeDao
+import com.wisp.data.WispDatabase
 import com.wisp.memory.MemoryStore
 import dagger.Module
 import dagger.Provides

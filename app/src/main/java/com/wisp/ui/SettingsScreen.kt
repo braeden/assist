@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -328,7 +328,9 @@ private fun TtsEngineCard(
 ) {
     var open by remember { mutableStateOf(false) }
     val defaultLabel =
-        engines.firstOrNull { it.packageName == defaultEngine }?.label
+        engines
+            .firstOrNull { it.packageName == defaultEngine }
+            ?.label
             ?.let { stringResource(R.string.tts_engine_default_named, it) }
             ?: stringResource(R.string.tts_engine_default)
     val selectedLabel =

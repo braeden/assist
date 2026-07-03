@@ -415,6 +415,58 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   notification, ONNX loads, live per-frame scores in logcat, clean disarm;
   **real "alexa" detection needs a physical mic — device checkpoint pending.**
 
+### Batch actions + Wisp icon + mic-cancel fix + Anthropic server tools ✅
+- **`perform_actions` batch tool:** one call runs an ordered list of control
+  actions (`tap`/`tap_xy`/`long_press(_xy)`/`swipe(_xy)`/`scroll`/`set_text`/
+  `press_key`/`open_app`/`wait` — `AgentTools.BATCHABLE`), stopping at the first
+  failure/decline; single aggregated `tool_result` (numbered per-action lines).
+  Executed in `AgentLoop.executeBatch` via recursive `gateAndExecute`, so
+  **ActionGate still confirms each gated sub-action**; sub-actions emit their own
+  `ToolCallStarted/Finished` bus events (live overlay chips) with ids
+  `<batch_id>_<i>`; 150ms inter-action breather. The screen is deliberately NOT
+  re-captured mid-batch — element ids stay bound to the outline the model chose
+  from (tool description + system prompt say: same-screen bursts only).
+  `BatchActionParser` (pure) + 7 tests.
+- **Mic double-tap stop fixed:** `SpeechRecognizer.cancel()` suppresses pending
+  callbacks, so `AndroidSttEngine.cancel()` (destroy-only) left `stream()`/
+  `transcribeOnce()` suspended forever — `dictate()` never returned and the hot
+  mic pill stuck. `cancel()` now invokes an identity-guarded `abortActive` hook
+  that closes the stream / resumes the continuation (`SttError.CANCELLED`) *and*
+  destroys the recognizer; registered before recognizer creation so a fast
+  second tap can't race the `main.post`.
+- **New launcher icon:** wisp flame (white body, cyan core, glow halo, drifting
+  sparks) on a dusk violet→indigo gradient; adaptive icon now uses
+  `drawable/ic_launcher_background` (gradient) + reworked foreground + new
+  `<monochrome>` layer for Android 13 themed icons. Unused
+  `ic_launcher_background` color removed. Verified rendering on the emulator
+  launcher.
+- **Anthropic server tools enabled:** `AgentTools.catalog(model)` appends
+  provider tools by model — `web_search_20260209` + `web_fetch_20260209` on
+  Opus 4.6+/Sonnet 4.6/Sonnet 5 (dynamic filtering, GA, no beta), basic
+  `web_search_20250305` on Haiku (basic web_fetch skipped — beta-gated);
+  `advisor_20260301` (name `advisor`, `model: claude-opus-4-8`, beta header
+  `advisor-tool-2026-03-01`) **only for sonnet/haiku executors** per the
+  API's advisor≥executor rule. Plumbing: `ToolSpec.ProviderTool.model` field;
+  new `ContentBlock.Raw`/`StoredBlock.Raw` preserve provider-owned blocks
+  (`server_tool_use`, `web_search_tool_result`, `advisor_tool_result`, …)
+  verbatim through streaming, Room, and replay (dropping them breaks
+  server-tool turns); `AgentLoop` handles `stop_reason=pause_turn` by
+  re-sending to resume the server-side loop. `AgentLoop` now builds the tool
+  catalog per-step from the session model (server tools vary only by model, so
+  prompt cache is unaffected — caches are model-scoped anyway).
+- **Model-swap safety:** `ServerToolPruner` (5 tests) filters replayed history
+  before each request — Raw blocks belonging to a server tool the *current*
+  model doesn't advertise are dropped (advisor results after sonnet→opus,
+  web_fetch results after opus→haiku), instead of 400ing the session; a turn
+  left empty by pruning is removed entirely. Unknown raw types are kept.
+- **Verified:** 193 unit tests green (+BatchActionParser 7, AgentToolsCatalog 6,
+  request-factory advisor/raw 3); `assembleDebug`, `lintDebug`, `detekt`,
+  `ktlintCheck` green (detekt baseline entries updated for renamed fns; ktlint
+  baseline regenerated — line-keyed entries had shifted). Installed + launched
+  on `emulator-5554`, no crash. **Device checkpoint pending:** live mic
+  double-tap cancel, a real `perform_actions` run, and live web_search/advisor
+  calls (need real API key + device).
+
 ### Next
 - **Follow-ups:** unify `AgentService`+`OverlayService` into one coordinated FGS;
   `SessionSteering` barge-in/budget wiring; `AgentService` optional existing-

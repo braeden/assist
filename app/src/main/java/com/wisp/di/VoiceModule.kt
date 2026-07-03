@@ -12,9 +12,9 @@ import com.wisp.voice.TtsEngine
 import com.wisp.voice.TypedReplySource
 import com.wisp.voice.VoiceProvider
 import com.wisp.voice.VoiceUserIo
+import com.wisp.voice.WakeWordDetector
 import com.wisp.voice.android.AndroidSttEngine
 import com.wisp.voice.android.AndroidTtsEngine
-import com.wisp.voice.WakeWordDetector
 import com.wisp.voice.android.AndroidVoiceProvider
 import com.wisp.voice.android.BargeInDetector
 import com.wisp.voice.wake.OpenWakeWordDetector
