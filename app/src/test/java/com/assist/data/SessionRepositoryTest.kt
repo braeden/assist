@@ -259,4 +259,43 @@ class SessionRepositoryTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun `dangling tool_use from an interrupt is repaired with placeholder results`() = runTest {
+        val session = repo.createSession(title = "Interrupted")
+        repo.appendMessage(session.id, Role.USER, listOf(ContentBlock.Text("start a timer")))
+        // Interrupt landed after the assistant turn persisted but before its
+        // tool results did — the classic pre-emption tail.
+        repo.appendMessage(
+            session.id,
+            Role.ASSISTANT,
+            listOf(
+                ContentBlock.Text("Tapping the timer."),
+                ContentBlock.ToolUse(id = "tu_a", name = "tap", inputJson = "{\"element_id\":3}"),
+                ContentBlock.ToolUse(id = "tu_b", name = "wait", inputJson = "{\"ms\":500}"),
+            ),
+        )
+
+        val rebuilt = repo.buildLlmMessages(session.id)
+
+        // A synthetic user turn answers both dangling tool_use ids.
+        assertEquals(3, rebuilt.size)
+        assertEquals(Role.USER, rebuilt[2].role)
+        val results = rebuilt[2].content.filterIsInstance<ContentBlock.ToolResult>()
+        assertEquals(listOf("tu_a", "tu_b"), results.map { it.toolUseId })
+        assertEquals(
+            SessionRepository.INTERRUPTED_TOOL_RESULT,
+            (results[0].content.single() as ContentBlock.Text).text,
+        )
+
+        // Resuming and appending a real user turn merges placeholders ahead of it.
+        repo.appendMessage(session.id, Role.USER, listOf(ContentBlock.Text("try again")))
+        val resumed = repo.buildLlmMessages(session.id)
+        assertEquals(3, resumed.size)
+        val merged = resumed[2].content
+        assertEquals(2, merged.filterIsInstance<ContentBlock.ToolResult>().size)
+        // Results lead the turn; the user's text follows.
+        assertTrue(merged.first() is ContentBlock.ToolResult)
+        assertTrue(merged.last() is ContentBlock.Text)
+    }
 }

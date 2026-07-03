@@ -185,7 +185,7 @@ class SessionRepository(
         val rows = messages.getForSession(sessionId)
         val mediaById = media.getForSession(sessionId).associateBy { it.id }
 
-        return rows.map { row ->
+        val rebuilt = rows.map { row ->
             val blocks = MessageContentCodec.decode(row.contentJson)
             val content = withContext(ioDispatcher) {
                 blocks.map { toContentBlock(it, mediaById) }
@@ -198,6 +198,59 @@ class SessionRepository(
                 else -> Role.USER
             }
             LlmMessage(role = role, content = content)
+        }
+        return repairDanglingToolUses(rebuilt)
+    }
+
+    /**
+     * The API requires every `tool_use` in an assistant turn to be answered by a
+     * `tool_result` in the next user turn. An interrupt (or crash) between
+     * persisting the assistant message and persisting its results leaves dangling
+     * `tool_use` ids, which would fail the whole request on session resume —
+     * synthesize placeholder results so the conversation always replays. Runs at
+     * rebuild time so it also heals sessions that were truncated in the past.
+     */
+    private fun repairDanglingToolUses(messages: List<LlmMessage>): List<LlmMessage> {
+        val repaired = mutableListOf<LlmMessage>()
+        var i = 0
+        while (i < messages.size) {
+            val msg = messages[i]
+            repaired += msg
+            i++
+            val next = messages.getOrNull(i)
+            val placeholders = missingToolResults(msg, next)
+            if (placeholders.isNotEmpty()) {
+                if (next != null && next.role == Role.USER) {
+                    // Merge into the existing follow-up user turn (results lead).
+                    repaired += next.copy(content = placeholders + next.content)
+                    i++
+                } else {
+                    // Interrupted at the very tail: answer w/ a synthetic user turn.
+                    repaired += LlmMessage(role = Role.USER, content = placeholders)
+                }
+            }
+        }
+        return repaired
+    }
+
+    /** Placeholder results for [msg]'s tool_use ids that [next] doesn't answer. */
+    private fun missingToolResults(msg: LlmMessage, next: LlmMessage?): List<ContentBlock> {
+        val toolUseIds = if (msg.role == Role.ASSISTANT) {
+            msg.content.filterIsInstance<ContentBlock.ToolUse>().map { it.id }
+        } else {
+            emptyList()
+        }
+        val present = next?.takeIf { it.role == Role.USER }
+            ?.content
+            ?.filterIsInstance<ContentBlock.ToolResult>()
+            ?.mapTo(mutableSetOf()) { it.toolUseId }
+            .orEmpty()
+        return toolUseIds.filterNot(present::contains).map { id ->
+            ContentBlock.ToolResult(
+                toolUseId = id,
+                content = listOf(ContentBlock.Text(INTERRUPTED_TOOL_RESULT)),
+                isError = false,
+            )
         }
     }
 
@@ -433,6 +486,7 @@ class SessionRepository(
     companion object {
         const val DEFAULT_MODEL = "claude-opus-4-8"
         const val DROPPED_SCREENSHOT_PLACEHOLDER = "[screenshot dropped to save context]"
+        const val INTERRUPTED_TOOL_RESULT = "[interrupted by the user before this tool call ran]"
         private const val SUMMARY_PREFIX = "[Earlier conversation summarized]\n"
     }
 }

@@ -115,6 +115,12 @@ class AgentLoop @Inject constructor(
         var pendingContext: ContextManagement? = null
         val progress = NoProgressTracker()
         var step = 0
+        // True while the last thing the user *heard* is still current — i.e. a
+        // `say` succeeded and no device action has happened since. Used to keep
+        // `finish` silent when the model already announced the outcome (whether
+        // in the same turn or a previous one), while still speaking summaries
+        // that follow further actions (those are genuinely new information).
+        var spokenIsCurrent = false
 
         while (true) {
             coroutineContext.ensureActive()
@@ -156,9 +162,10 @@ class AgentLoop @Inject constructor(
             bus.emit(AgentEvent.UsageUpdated(response.usage))
 
             if (response.toolCalls.isEmpty()) {
-                // No tool calls: the model is done (or just talking). Treat as finish.
+                // No tool calls: the model is done (or just talking). Treat as
+                // finish; skip TTS if a `say` already delivered the outcome.
                 val summary = response.text.ifBlank { null }
-                summary?.let { userIo.say(it) }
+                if (!spokenIsCurrent) summary?.let { userIo.say(it) }
                 bus.emit(AgentEvent.Finished(summary))
                 return
             }
@@ -168,14 +175,17 @@ class AgentLoop @Inject constructor(
             var producedPerception = false
             var finished = false
             var finishSummary: String? = null
-            var spokeThisTurn = false
 
             for (call in response.toolCalls) {
                 coroutineContext.ensureActive()
                 bus.emit(AgentEvent.ToolCallStarted(call.id, call.name, call.argumentsJson))
 
                 val exec = gateAndExecute(sessionId, call, latestScreen)
-                if (call.name == AgentTools.SAY && exec.success) spokeThisTurn = true
+                if (call.name == AgentTools.SAY && exec.success) {
+                    spokenIsCurrent = true
+                } else if (exec.didAct) {
+                    spokenIsCurrent = false
+                }
                 repository.appendToolCall(
                     sessionId = sessionId,
                     messageId = null,
@@ -201,9 +211,11 @@ class AgentLoop @Inject constructor(
             }
 
             if (finished) {
-                // Speak the finish summary only if the model didn't already `say`
-                // something this turn — avoids the duplicate TTS of a say+finish pair.
-                if (!spokeThisTurn) finishSummary?.takeIf { it.isNotBlank() }?.let { userIo.say(it) }
+                // Speak the finish summary only if the user hasn't already heard
+                // the outcome (a `say` with no device action after it) — whether
+                // that say happened this turn or an earlier one. Avoids the
+                // "says it, then re-says it with different framing" double-TTS.
+                if (!spokenIsCurrent) finishSummary?.takeIf { it.isNotBlank() }?.let { userIo.say(it) }
                 repository.appendMessage(sessionId, Role.USER, resultBlocks, kind = TOOL_RESULT_KIND)
                 bus.emit(AgentEvent.Finished(finishSummary))
                 return
