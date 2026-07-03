@@ -87,9 +87,12 @@ fun OverlayRoot(
     onSetFocusable: (Boolean) -> Unit,
     onStop: () -> Unit,
 ) {
+    // "Listening" is shown iff the mic is genuinely open: dictation overrides the
+    // folded phase for display, so the label can never claim a mic that isn't hot.
+    val shown = if (dictating) state.copy(phase = AgentPhase.LISTENING) else state
     if (state.expanded) {
         Panel(
-            state = state,
+            state = shown,
             sessions = sessions,
             dictating = dictating,
             onCollapse = onToggleExpanded,
@@ -105,7 +108,7 @@ fun OverlayRoot(
         )
     } else {
         Bubble(
-            state = state,
+            state = shown,
             dictating = dictating,
             onTap = onToggleExpanded,
             onInterrupt = onInterrupt,

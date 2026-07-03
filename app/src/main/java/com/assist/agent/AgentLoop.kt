@@ -38,7 +38,8 @@ import javax.inject.Singleton
  * The agent orchestration spine: builds requests, runs the tool-use loop with
  * safety gates + auto-perception, persists everything, and streams events.
  * Cancellable — [interrupt] aborts the in-flight `llm.send`/gesture within ~1s and
- * transitions to [AgentEvent.Listening] so the user can redirect (phase-08 barge-in).
+ * idles the agent ([AgentEvent.Finished]); "Listening" is only ever shown while a
+ * capture is genuinely open (ask / dictation), never as an aspirational state.
  */
 @Singleton
 class AgentLoop @Inject constructor(
@@ -69,12 +70,17 @@ class AgentLoop @Inject constructor(
      */
     fun start(sessionId: Long, userIntent: String): Job {
         currentJob?.cancel(CancellationException("superseded by a new run"))
-        val job = scope.launch(CoroutineName("AgentLoop")) {
+        var job: Job? = null
+        job = scope.launch(CoroutineName("AgentLoop")) {
             try {
                 runLoop(sessionId, userIntent)
             } catch (c: CancellationException) {
-                Log.i(TAG, "loop cancelled -> listening")
-                bus.emit(AgentEvent.Listening)
+                Log.i(TAG, "loop cancelled")
+                // A user interrupt idles the agent (emitting "Listening" here left
+                // the UI claiming an open mic that wasn't). When the cancel came
+                // from being superseded, stay silent — the new run's own events
+                // drive the UI and must not be stamped finished by the old job.
+                if (currentJob === job) bus.emit(AgentEvent.Finished("Interrupted"))
                 throw c
             } catch (t: Throwable) {
                 Log.e(TAG, "agent loop error", t)
@@ -87,8 +93,8 @@ class AgentLoop @Inject constructor(
 
     /**
      * Interrupt the running task: cancels the in-flight LLM stream / gesture and
-     * transitions to listening. Returns promptly; the loop unwinds within ~1s
-     * because `llm.send` aborts its HTTP call on cancellation.
+     * idles the agent. Returns promptly; the loop unwinds within ~1s because
+     * `llm.send` aborts its HTTP call on cancellation.
      */
     fun interrupt() {
         Log.i(TAG, "interrupt requested")
