@@ -21,7 +21,7 @@ androidxTestExt = "1.2.1"
 androidxTestCore = "1.6.1"
 androidxTestRunner = "1.6.2"
 turbine = "1.1.0"
-detekt = "1.23.7"
+detekt = "1.23.8"
 ktlint = "12.1.1"
 
 [libraries]
