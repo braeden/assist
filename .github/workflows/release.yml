@@ -5,10 +5,10 @@ name: Release APK
 #
 # Required GitHub repository secrets (Settings -> Secrets and variables ->
 # Actions). See RELEASE.md for how to generate them:
-#   ASSIST_KEYSTORE_BASE64     base64 of your release keystore (.jks)
-#   ASSIST_KEYSTORE_PASSWORD   keystore store password
-#   ASSIST_KEY_ALIAS           key alias inside the keystore
-#   ASSIST_KEY_PASSWORD        key password (often == store password)
+#   WISP_KEYSTORE_BASE64     base64 of your release keystore (.jks)
+#   WISP_KEYSTORE_PASSWORD   keystore store password
+#   WISP_KEY_ALIAS           key alias inside the keystore
+#   WISP_KEY_PASSWORD        key password (often == store password)
 #
 # If the keystore secrets are absent the build still succeeds but the APK is
 # DEBUG-signed (installable, but a different signing identity — see RELEASE.md).
@@ -30,7 +30,7 @@ jobs:
     env:
       # Job-level so the decode step's `if:` can gate on it (the secrets context
       # is not reliably available in step-level conditions). Masked in logs.
-      ASSIST_KEYSTORE_BASE64: ${{ secrets.ASSIST_KEYSTORE_BASE64 }}
+      WISP_KEYSTORE_BASE64: ${{ secrets.WISP_KEYSTORE_BASE64 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -50,10 +50,10 @@ jobs:
       # the secret is unset, the file is absent and the build falls back to
       # debug signing.
       - name: Decode release keystore
-        if: ${{ env.ASSIST_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.WISP_KEYSTORE_BASE64 != '' }}
         run: |
-          echo "$ASSIST_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/assist-release.jks"
-          echo "ASSIST_KEYSTORE_FILE=$RUNNER_TEMP/assist-release.jks" >> "$GITHUB_ENV"
+          echo "$WISP_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/wisp-release.jks"
+          echo "WISP_KEYSTORE_FILE=$RUNNER_TEMP/wisp-release.jks" >> "$GITHUB_ENV"
 
       - name: Resolve version name
         id: version
@@ -68,23 +68,23 @@ jobs:
       # ANTHROPIC_API_KEY is intentionally NOT set here.
       - name: Build signed release APK
         env:
-          ASSIST_KEYSTORE_PASSWORD: ${{ secrets.ASSIST_KEYSTORE_PASSWORD }}
-          ASSIST_KEY_ALIAS: ${{ secrets.ASSIST_KEY_ALIAS }}
-          ASSIST_KEY_PASSWORD: ${{ secrets.ASSIST_KEY_PASSWORD }}
+          WISP_KEYSTORE_PASSWORD: ${{ secrets.WISP_KEYSTORE_PASSWORD }}
+          WISP_KEY_ALIAS: ${{ secrets.WISP_KEY_ALIAS }}
+          WISP_KEY_PASSWORD: ${{ secrets.WISP_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --stacktrace
 
       - name: Stage versioned APK
         id: apk
         run: |
           SRC="app/build/outputs/apk/release/app-release.apk"
-          DEST="assist-${{ steps.version.outputs.version }}.apk"
+          DEST="wisp-${{ steps.version.outputs.version }}.apk"
           cp "$SRC" "$DEST"
           echo "path=$DEST" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: assist-release-apk
+          name: wisp-release-apk
           path: ${{ steps.apk.outputs.path }}
           if-no-files-found: error
 

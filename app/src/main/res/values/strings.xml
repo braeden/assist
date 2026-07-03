@@ -1,12 +1,12 @@
 <resources>
-    <string name="app_name">Assist</string>
+    <string name="app_name">Wisp</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_title">Assist</string>
+    <string name="onboarding_title">Wisp</string>
     <string name="onboarding_subtitle">On-device AI phone agent</string>
     <string name="permissions_header">Permissions</string>
     <string name="perm_accessibility">Accessibility service</string>
-    <string name="perm_accessibility_desc">Lets Assist read the screen and perform gestures</string>
+    <string name="perm_accessibility_desc">Lets Wisp read the screen and perform gestures</string>
     <string name="perm_overlay">Display over other apps</string>
     <string name="perm_overlay_desc">Shows the live agent conversation overlay</string>
     <string name="perm_microphone">Microphone</string>
@@ -42,6 +42,6 @@
     <string name="overlay_needs_permission">Grant \"Display over other apps\" first</string>
 
     <!-- Accessibility service (phase-03) -->
-    <string name="accessibility_service_description">Assist reads the screen and performs taps, swipes, and text entry so the AI agent can operate your phone on your behalf.</string>
-    <string name="accessibility_service_summary">Lets Assist perceive and control the screen for the AI agent.</string>
+    <string name="accessibility_service_description">Wisp reads the screen and performs taps, swipes, and text entry so the AI agent can operate your phone on your behalf.</string>
+    <string name="accessibility_service_summary">Lets Wisp perceive and control the screen for the AI agent.</string>
 </resources>

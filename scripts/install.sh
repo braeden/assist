@@ -6,5 +6,5 @@ require_gradle
 # Pin the target so installDebug picks the right device when several are attached.
 export ANDROID_SERIAL="$(target_device)"
 echo ">> installDebug to $ANDROID_SERIAL (JAVA_HOME=$JAVA_HOME)"
-"$GRADLEW" -p "$ASSIST_ROOT" "${APP_MODULE}:installDebug" "$@"
+"$GRADLEW" -p "$WISP_ROOT" "${APP_MODULE}:installDebug" "$@"
 echo ">> done"

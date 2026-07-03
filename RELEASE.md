@@ -45,15 +45,15 @@ Run locally (needs JDK 17's `keytool`, on `PATH` or at
 
 ```bash
 keytool -genkeypair -v \
-  -keystore assist-release.jks \
-  -alias assist \
+  -keystore wisp-release.jks \
+  -alias wisp \
   -keyalg RSA -keysize 2048 -validity 10000 \
   -storepass 'CHANGE_ME_STORE_PASS' \
   -keypass  'CHANGE_ME_KEY_PASS' \
   -dname 'CN=Assist, O=Assist, C=US'
 ```
 
-This writes `assist-release.jks`. It is **gitignored** (`*.jks` / `*.keystore`) —
+This writes `wisp-release.jks`. It is **gitignored** (`*.jks` / `*.keystore`) —
 never commit it. Back it up outside the repo.
 
 ### Build a signed release APK locally
@@ -62,10 +62,10 @@ Point the build at the keystore via env vars (or `-P` Gradle properties):
 
 ```bash
 export JAVA_HOME="$(/usr/libexec/java_home -v 17)"
-ASSIST_KEYSTORE_FILE="$PWD/assist-release.jks" \
-ASSIST_KEYSTORE_PASSWORD='CHANGE_ME_STORE_PASS' \
-ASSIST_KEY_ALIAS='assist' \
-ASSIST_KEY_PASSWORD='CHANGE_ME_KEY_PASS' \
+WISP_KEYSTORE_FILE="$PWD/wisp-release.jks" \
+WISP_KEYSTORE_PASSWORD='CHANGE_ME_STORE_PASS' \
+WISP_KEY_ALIAS='wisp' \
+WISP_KEY_PASSWORD='CHANGE_ME_KEY_PASS' \
 ./gradlew assembleRelease
 
 # -> app/build/outputs/apk/release/app-release.apk
@@ -75,8 +75,8 @@ ASSIST_KEY_PASSWORD='CHANGE_ME_KEY_PASS' \
 ```
 
 Equivalent Gradle-property names (e.g. in `~/.gradle/gradle.properties`, never
-the repo): `assistKeystoreFile`, `assistKeystorePassword`, `assistKeyAlias`,
-`assistKeyPassword`.
+the repo): `wispKeystoreFile`, `wispKeystorePassword`, `wispKeyAlias`,
+`wispKeyPassword`.
 
 ---
 
@@ -91,8 +91,8 @@ workflow artifact).
 
 ```bash
 # macOS — copies the base64 to the clipboard:
-base64 -i assist-release.jks | pbcopy
-# (Linux: base64 -w0 assist-release.jks)
+base64 -i wisp-release.jks | pbcopy
+# (Linux: base64 -w0 wisp-release.jks)
 ```
 
 In the GitHub repo: **Settings → Secrets and variables → Actions → New
@@ -100,10 +100,10 @@ repository secret**. Create **exactly these four secrets**:
 
 | Secret name | Value |
 |---|---|
-| `ASSIST_KEYSTORE_BASE64` | the base64 blob from the command above |
-| `ASSIST_KEYSTORE_PASSWORD` | your keystore store password |
-| `ASSIST_KEY_ALIAS` | `assist` (the alias you chose) |
-| `ASSIST_KEY_PASSWORD` | your key password |
+| `WISP_KEYSTORE_BASE64` | the base64 blob from the command above |
+| `WISP_KEYSTORE_PASSWORD` | your keystore store password |
+| `WISP_KEY_ALIAS` | `wisp` (the alias you chose) |
+| `WISP_KEY_PASSWORD` | your key password |
 
 (If you omit these, the workflow still succeeds but produces a **debug-signed**
 APK.)
@@ -118,11 +118,11 @@ git push origin v0.1.0
 ```
 
 Watch the **Release APK** workflow in the Actions tab. When it finishes, the
-signed APK (`assist-0.1.0.apk`) is attached to the new Release under
+signed APK (`wisp-0.1.0.apk`) is attached to the new Release under
 **Releases**.
 
 **Manual run** — Actions tab → **Release APK** → **Run workflow**. The APK is
-uploaded as the `assist-release-apk` artifact on that run (download it from the
+uploaded as the `wisp-release-apk` artifact on that run (download it from the
 run summary).
 
 > Bump `versionCode` / `versionName` in `app/build.gradle.kts` before tagging so
@@ -131,7 +131,7 @@ run summary).
 ### 3. Install on the Pixel 7 Pro (no USB)
 
 1. On the phone, open the GitHub Release page (or the Actions run) in Chrome and
-   **download** `assist-<version>.apk`.
+   **download** `wisp-<version>.apk`.
 2. Tap the downloaded file. Android prompts to allow installs from this source:
    **Settings → "Install unknown apps" → Chrome (or your browser) → Allow from
    this source**.

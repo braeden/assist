@@ -12,7 +12,7 @@
     <ID>EmptyFunctionBlock:VoiceUserIoTest.kt$VoiceUserIoTest.&lt;no name provided&gt;${}</ID>
     <ID>EmptyFunctionBlock:VoiceUserIoTest.kt$VoiceUserIoTest.FakeStt${}</ID>
     <ID>EmptyFunctionBlock:VoiceUserIoTest.kt$VoiceUserIoTest.FakeTts${}</ID>
-    <ID>FunctionNaming:MainActivity.kt$@Composable private fun AssistApp()</ID>
+    <ID>FunctionNaming:MainActivity.kt$@Composable private fun WispApp()</ID>
     <ID>FunctionNaming:OverlayContent.kt$@Composable fun OverlayRoot( state: OverlayUiState, sessions: List&lt;SessionEntity&gt;, dictating: Boolean, dictationText: String, onToggleExpanded: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, onInterrupt: () -&gt; Unit, onRecordNewMessage: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onNewSession: () -&gt; Unit, onSwitchSession: (Long) -&gt; Unit, onSubmitReply: (String) -&gt; Unit, onDictate: suspend () -&gt; String?, onStop: () -&gt; Unit, )</ID>
     <ID>FunctionNaming:OverlayContent.kt$@Composable private fun Bubble( state: OverlayUiState, dictating: Boolean, onTap: () -&gt; Unit, onInterrupt: () -&gt; Unit, onRecordNewMessage: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, )</ID>
     <ID>FunctionNaming:OverlayContent.kt$@Composable private fun ConfirmationRow( prompt: ConfirmationPrompt, onSubmitReply: (String) -&gt; Unit, )</ID>
@@ -44,7 +44,7 @@
     <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun PermissionRow( title: String, desc: String, granted: Boolean, onGrant: () -&gt; Unit, )</ID>
     <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun PermissionsCard( accessibilityOk: Boolean, overlayOk: Boolean, micOk: Boolean, notifOk: Boolean, onAccessibility: () -&gt; Unit, onOverlay: () -&gt; Unit, onMic: () -&gt; Unit, onNotif: () -&gt; Unit, )</ID>
     <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun SectionHeader(title: String)</ID>
-    <ID>FunctionNaming:Theme.kt$@Composable fun AssistTheme( darkTheme: Boolean = isSystemInDarkTheme(), dynamicColor: Boolean = true, content: @Composable () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:Theme.kt$@Composable fun WispTheme( darkTheme: Boolean = isSystemInDarkTheme(), dynamicColor: Boolean = true, content: @Composable () -&gt; Unit, )</ID>
     <ID>FunctionNaming:VoiceTestScreen.kt$@Composable fun VoiceTestScreen(viewModel: VoiceTestViewModel = hiltViewModel())</ID>
     <ID>InstanceOfCheckForException:BargeInDetector.kt$BargeInDetector$t is kotlinx.coroutines.CancellationException</ID>
     <ID>LongMethod:AgentLoop.kt$AgentLoop$private suspend fun runLoop( sessionId: Long, userIntent: String, )</ID>
@@ -186,7 +186,7 @@
     <ID>TooManyFunctions:DefaultDeviceController.kt$DefaultDeviceController : DeviceController</ID>
     <ID>TooManyFunctions:DeviceController.kt$DeviceController</ID>
     <ID>TooManyFunctions:MemoryStore.kt$MemoryStore</ID>
-    <ID>TooManyFunctions:OverlayContent.kt$com.assist.overlay.OverlayContent.kt</ID>
+    <ID>TooManyFunctions:OverlayContent.kt$com.wisp.overlay.OverlayContent.kt</ID>
     <ID>TooManyFunctions:OverlayController.kt$OverlayController</ID>
     <ID>TooManyFunctions:OverlayService.kt$OverlayService : Service</ID>
     <ID>TooManyFunctions:SessionDao.kt$SessionDao</ID>

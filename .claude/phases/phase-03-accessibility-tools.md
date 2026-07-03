@@ -14,7 +14,7 @@ and `AccessibilityNodeInfo`, `GestureDescription`. Key APIs you will use:
 `AccessibilityServiceInfo` flags (`flagRetrieveInteractiveWindows`,
 `flagRequestFilterKeyEvents` as needed), and `onAccessibilityEvent`.
 
-## Deliverables (all under `com.assist.service`)
+## Deliverables (all under `com.wisp.service`)
 1. **`AssistAccessibilityService : AccessibilityService`** registered in the
    manifest with `<meta-data>` pointing to `res/xml/accessibility_service_config.xml`
    (capabilities: retrieve window content, perform gestures, can take screenshot;
@@ -54,9 +54,9 @@ and `AccessibilityNodeInfo`, `GestureDescription`. Key APIs you will use:
    them with fakes.
 
 ## Contracts I own (consumed by phase-06)
-- `com.assist.service.ScreenState`, `UiElement`, `ToolOutcome`
-- `com.assist.service.DeviceController` (interface + impl)
-- `com.assist.service.AssistAccessibilityService.instance`
+- `com.wisp.service.ScreenState`, `UiElement`, `ToolOutcome`
+- `com.wisp.service.DeviceController` (interface + impl)
+- `com.wisp.service.AssistAccessibilityService.instance`
 
 ## Steps
 1. Service + config XML + manifest registration; verify it appears in system
@@ -80,7 +80,7 @@ and `AccessibilityNodeInfo`, `GestureDescription`. Key APIs you will use:
 ```bash
 bash scripts/install.sh
 bash scripts/enable-service.sh          # then confirm toggle in Settings
-adb shell am broadcast -a com.assist.DEBUG_DUMP_SCREEN   # if you add a debug receiver
+adb shell am broadcast -a com.wisp.DEBUG_DUMP_SCREEN   # if you add a debug receiver
 bash scripts/logcat.sh                  # inspect ScreenState output
 ```
 

@@ -152,7 +152,7 @@ and the user can start/resume/switch sessions by voice or UI. See phase-05.
 ## Module / package layout (single Gradle module `app`)
 
 ```
-com.assist
+com.wisp
 ├── service/     AccessibilityService, node serialization, gesture dispatch
 ├── llm/         LlmClient interface + models  (llm/anthropic/ = Claude impl)
 ├── agent/       AgentLoop, ToolRouter, AgentTool defs, event bus

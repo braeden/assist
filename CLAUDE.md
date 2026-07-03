@@ -1,4 +1,4 @@
-# CLAUDE.md — Assist progress log
+# CLAUDE.md — Wisp progress log
 
 Running log of what has landed, for humans and models picking up the work.
 Plan and per-phase specs: [`.claude/`](.claude/README.md).
@@ -12,7 +12,7 @@ Plan and per-phase specs: [`.claude/`](.claude/README.md).
   with a concrete Claude impl (default `claude-opus-4-8`).
 
 ## Conventions (see `.claude/CONVENTIONS.md`)
-- App id `com.assist`; single `:app` module; minSdk 30 / target/compile 35; JDK 17.
+- App id `com.wisp`; single `:app` module; minSdk 30 / target/compile 35; JDK 17.
 - Kotlin, Compose, Hilt, Room, Coroutines, kotlinx.serialization.
 
 ## Environment (provisioned)
@@ -43,7 +43,7 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   `gradle/libs.versions.toml` (AGP 8.7.3, Gradle 8.9, Kotlin 2.0.21, Compose BOM
   2024.10.01, Hilt 2.52, Room 2.6.1, coroutines/serialization/security-crypto).
   Wrapper committed (`./gradlew`, pinned 8.9).
-- **App** under `com.assist`: `AssistApplication` (`@HiltAndroidApp`),
+- **App** under `com.wisp`: `WispApplication` (`@HiltAndroidApp`),
   `ui.MainActivity` (Compose) onboarding — live permission status + deep-links
   (accessibility, overlay, mic, notifications), masked Anthropic-key field, gated
   "Start session". `data.SecretStore` + `EncryptedSecretStore`
@@ -63,7 +63,7 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   `local.properties` from the resolved SDK on first build.
 
 ### Phase 03 — Accessibility service + device tools ✅
-- `service.AssistAccessibilityService` (singleton `instance`, `@AndroidEntryPoint`)
+- `service.WispAccessibilityService` (singleton `instance`, `@AndroidEntryPoint`)
   registered in the manifest + `res/xml/accessibility_service_config.xml` (retrieve
   content, gestures, screenshot). Emits `ScreenChangeSignals.events` on window
   state/content changes so the agent loop can await UI settle.
@@ -76,14 +76,14 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   pressKey (BACK/HOME/RECENTS/NOTIFICATIONS/QUICK_SETTINGS/ENTER), openApp (label
   resolution via `AppResolver`), wait — all `suspend`, return `ToolOutcome`.
 - DI in new `di/ServiceModule.kt` (AppModule untouched). Debug hook:
-  `com.assist.DEBUG_DUMP_SCREEN` broadcast dumps/acts for verification.
+  `com.wisp.DEBUG_DUMP_SCREEN` broadcast dumps/acts for verification.
 - Verified on emulator: Settings dump (27 elements, sensible bounds/flags),
   tap-by-id navigation + swipe change the screen, screenshot non-null 1440x3120.
   29 unit tests green (serializer mapping/caps/recycle, bounds/center, swipe
   geometry, label resolution, rendering).
 
 ### Phase 04 — LLM abstraction + Claude client ✅
-- **Seeded seam** (`com.assist.llm`, on `main` before the fan-out so 04/05 shared
+- **Seeded seam** (`com.wisp.llm`, on `main` before the fan-out so 04/05 shared
   it): `LlmClient`, `LlmRequest/Response`, `LlmMessage`+`Role`, `ContentBlock`
   (Text/Image/Thinking/ToolUse/ToolResult), `SystemBlock`, `ToolDef`, `ToolCall`,
   `LlmStreamEvent`, `Usage`, `Effort`. Model-agnostic; no Anthropic types leak.
@@ -104,7 +104,7 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
 - Added deps: `okhttp 4.12.0`, `androidx-test-runner`; `buildConfig=true`.
 
 ### Phase 05 — Session DB + context management ✅
-- Room DB (`AssistDatabase`, v1, destructive migration): `Session/Message/
+- Room DB (`WispDatabase`, v1, destructive migration): `Session/Message/
   ToolCall/Usage/Media/Note` entities + DAOs. Screenshots stored as **files**
   (`filesDir/screenshots/session_<id>/<uuid>.<ext>`) via `ScreenshotStore`; rows
   hold paths only (no base64 blobs). `StoredBlock`/`MessageContentCodec` for
@@ -137,14 +137,14 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   though raw-IP ping worked). Fix = relaunch with `-dns-server 8.8.8.8,8.8.4.4`.
 
 ### Phase 06 — Agent orchestration loop (+ phase-12 seams) ✅
-- **`com.assist.agent`** spine: `AgentTools` catalog (18 `ClientTool`s), `ToolRouter`
+- **`com.wisp.agent`** spine: `AgentTools` catalog (18 `ClientTool`s), `ToolRouter`
   (control/perception→`DeviceController`; `say`/`ask`/`finish`→`UserIo`; context
   tools→`SessionRepository`+context edits; `get_screen_state`/`take_screenshot`→
   capture+`tool_result`), `ActionGate` (pure classify + confirm; SEND/PAY/DELETE/
   INSTALL/CALL/PASSWORD via target-element keywords + allowlist), `AgentLoop`
   (cancellable coroutine; auto-perception; loop guards: max-steps, no-progress,
   context-ceiling; `interrupt()`), `AgentEventBus` (`SharedFlow<AgentEvent>`),
-  `AgentService` (specialUse FGS), `DebugRunReceiver` (`com.assist.DEBUG_RUN` /
+  `AgentService` (specialUse FGS), `DebugRunReceiver` (`com.wisp.DEBUG_RUN` /
   `DEBUG_INTERRUPT`). `UserIo`→`LoggingUserIo` stub, `SystemPromptProvider`→real
   phase-10 impl (see Integration). New `di/AgentModule.kt`; `AppModule` untouched.
 - **Phase-12 seams folded in (additive):** `ToolSpec` sealed (`ClientTool`/
@@ -180,7 +180,7 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   to gitignored `captures/`: `deploy-pixel.sh` (one-command build+install+launch
   via Gradle `runApp`; `--a11y`), `pair-device.sh` (Wi-Fi `pair`/`connect`/`usb`
   wireless debugging — no IPs baked in), `dump-a11y.sh` (fires the phase-03
-  `com.assist.DEBUG_DUMP_SCREEN` broadcast + prints the logged outline;
+  `com.wisp.DEBUG_DUMP_SCREEN` broadcast + prints the logged outline;
   `--screenshot/--open/--tap/--swipe/--key`), `screenshot.sh` (`exec-out
   screencap`), `bugreport.sh` (`full`/`--anr`/`--logcat`). Enhanced `devices.sh`
   to emit copy-ready `export ANDROID_SERIAL=…` lines per online device.
@@ -212,12 +212,12 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   Clock app and start a 1 minute timer") completed in 8 steps with the *real*
   phase-10 prompt — a 1-minute timer counts down on-screen.
 - **Gotcha:** the `DEBUG_RUN` broadcast must target the package
-  (`am broadcast -p com.assist -a com.assist.DEBUG_RUN --es intent "…"`); an
+  (`am broadcast -p com.wisp -a com.wisp.DEBUG_RUN --es intent "…"`); an
   implicit broadcast is dropped on API 35. Reinstalling also unbinds the
   accessibility service — re-enable it before an e2e run.
 
 ### Phase 08 — Voice I/O + Interruptibility ✅ (on worktree; device checkpoint pending)
-- **Swappable seam** (`com.assist.voice`, from `.claude/voice-architecture.md`):
+- **Swappable seam** (`com.wisp.voice`, from `.claude/voice-architecture.md`):
   `SttEngine` (+`SttEvent`/`SttResult`/`SttConfig`/`SttError`/`SttException`),
   `TtsEngine` (+`TtsEvent`/`SpeakOptions`/`VoiceInfo`), `AudioSessionArbiter`+
   `MicOwner`, `VoiceProvider`+`VoiceProviderKind`, `WakeWordDetector` (declared for
@@ -262,7 +262,7 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
 
 
 ### Phase 07 — Overlay UI (interaction viz + interrupt) ✅
-- **`com.assist.overlay`**: `OverlayService` (own `specialUse` FGS) adds a Compose
+- **`com.wisp.overlay`**: `OverlayService` (own `specialUse` FGS) adds a Compose
   overlay to `WindowManager` via `TYPE_APPLICATION_OVERLAY` +
   `FLAG_NOT_FOCUSABLE|NOT_TOUCH_MODAL` (driven app keeps input), toggling focusable
   only while capturing a typed reply; draggable; add/remove + focus/move via
@@ -314,8 +314,8 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   `AgentService.runIntent` (+ auto-show overlay). Verified on-device end-to-end.
 
 ### Phase 12 — Session UI + learned memory ✅ (merged + nav wired)
-- Merged `com.assist.ui.sessions` (sessions list / transcript+context / recipes),
-  `com.assist.memory.MemoryStore` (path-traversal-safe; memory tool in the **live**
+- Merged `com.wisp.ui.sessions` (sessions list / transcript+context / recipes),
+  `com.wisp.memory.MemoryStore` (path-traversal-safe; memory tool in the **live**
   catalog + routed in `ToolRouter`), `data.TaskRecipeEntity`/`TaskMemoryRepository`,
   `CostCalculator` fast rows, fast-mode `SettingsStore`+toggle. **Real Room
   `Migration(1,2)`** (sessions preserved, not destructive; `exportSchema` on,
@@ -354,9 +354,29 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   `ktlintCheck`, `lintDebug`, `./gradlew check`, and `assembleRelease` all green
   locally. No app source/logic touched (infra only).
 - **Human checkpoint:** to get *real* signed releases (not debug-fallback), the
-  user must create the 4 `ASSIST_*` GitHub secrets (+ optional `ASSIST_KEYSTORE_BASE64`)
+  user must create the 4 `WISP_*` GitHub secrets (+ optional `WISP_KEYSTORE_BASE64`)
   and keep the keystore (see RELEASE.md). CI emulator job / `ANTHROPIC_API_KEY`
   secret left out by design.
+
+### Rename — assist → wisp ✅
+- Full rebrand: GitHub repo `braeden/assist` → **`braeden/wisp`** (`gh repo
+  rename`; origin auto-updated), package `com.assist` → **`com.wisp`** across
+  main/test/androidTest (git-mv, history preserved), `applicationId`/`namespace`
+  `com.wisp`, `rootProject.name = "Wisp"`, Room schema dir →
+  `com.wisp.data.WispDatabase/` + DB file `wisp.db`.
+- Class renames: `WispApplication`, `WispAccessibilityService`, `WispDatabase`
+  (+ `WispDatabaseMigrationTest`, theme). Debug broadcasts → `com.wisp.DEBUG_*`
+  (scripts + `gradle/device.gradle.kts` updated). User-visible strings "Assist"
+  → "Wisp". Gradle task group `wisp`; `scripts/env.sh` `WISP_ROOT`.
+- CI/release: workflow env/secret names `ASSIST_*` → **`WISP_*`**, artifact
+  `wisp-<version>.apk`; `app/build.gradle.kts` reads `WISP_*` /
+  `wispKeystore*` props. Left alone: the word "assistant" (incl.
+  `USAGE_ASSISTANT`), gitignored secrets, local dir path
+  `~/Documents/assist` (dir name ≠ brand).
+- **Human checkpoints:** re-create the GitHub release secrets under the new
+  `WISP_*` names (secrets can't be renamed; debug-keystore fallback keeps
+  releases installable meanwhile); uninstall the old `com.assist` app from
+  devices — `com.wisp` is a fresh install with fresh data.
 
 ### Next
 - **Phase 09 (wake word)** — Porcupine/openWakeWord `WakeWordDetector` in an FGS,

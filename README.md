@@ -1,4 +1,4 @@
-# Assist — AI Phone Agent (Android / Kotlin)
+# Wisp — AI Phone Agent (Android / Kotlin)
 
 An on-device AI assistant that drives an Android phone through the Accessibility
 APIs to accomplish arbitrary user intents by voice. An LLM (Claude) perceives the
@@ -132,7 +132,7 @@ Updating a baseline after intentional changes:
 
 Room exports its schema to `app/schemas/` (`exportSchema = true`); a
 `MigrationTestHelper`-style `1→2` migration test lives in
-`app/src/test/.../AssistDatabaseMigrationTest.kt`.
+`app/src/test/.../WispDatabaseMigrationTest.kt`.
 
 ## Secrets
 

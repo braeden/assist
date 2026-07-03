@@ -41,12 +41,12 @@ if [[ "$release" -eq 1 ]]; then
   # use this variant for day-to-day perf-sensitive testing.
   # NOTE: swapping between a real release-signed install and this one requires an
   # uninstall (different signer); the debug-fallback signing matches installDebug.
-  "$GRADLEW" -p "$ASSIST_ROOT" :app:installRelease launchApp ${gradle_args[@]+"${gradle_args[@]}"}
-  echo ">> installed + launched com.assist (release) on $serial"
+  "$GRADLEW" -p "$WISP_ROOT" :app:installRelease launchApp ${gradle_args[@]+"${gradle_args[@]}"}
+  echo ">> installed + launched com.wisp (release) on $serial"
 else
   # runApp = :app:installDebug then `am start` the launcher (see gradle/device.gradle.kts).
-  "$GRADLEW" -p "$ASSIST_ROOT" runApp ${gradle_args[@]+"${gradle_args[@]}"}
-  echo ">> installed + launched com.assist on $serial"
+  "$GRADLEW" -p "$WISP_ROOT" runApp ${gradle_args[@]+"${gradle_args[@]}"}
+  echo ">> installed + launched com.wisp on $serial"
 fi
 
 if [[ "$enable_a11y" -eq 1 ]]; then

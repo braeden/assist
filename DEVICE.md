@@ -12,7 +12,7 @@ The scripts resolve the SDK/JDK via `scripts/env.sh` and pick a device via
 - [TL;DR — deploy in one command](#tldr)
 - [1. One-time phone setup (human)](#1-one-time-phone-setup-human)
 - [2. Connect the phone (USB or Wi-Fi)](#2-connect-the-phone-usb-or-wi-fi)
-- [3. Deploy Assist](#3-deploy-assist)
+- [3. Deploy Wisp](#3-deploy-wisp)
 - [4. Grant the on-device permissions (human)](#4-grant-the-on-device-permissions-human)
 - [5. Run your first session](#5-run-your-first-session)
 - [6. Debug helpers](#6-debug-helpers)
@@ -100,8 +100,8 @@ scripts/pair-device.sh usb           # flips the phone to tcpip:5555 and connect
 # unplug USB; the phone stays connected. Set ANDROID_SERIAL to the printed ip:5555.
 ```
 
-<a name="3-deploy-assist"></a>
-## 3. Deploy Assist
+<a name="3-deploy-wisp"></a>
+## 3. Deploy Wisp
 
 ```bash
 scripts/deploy-pixel.sh
@@ -154,7 +154,7 @@ All honor `ANDROID_SERIAL` and write artifacts to the gitignored `captures/` dir
 | Command | What it does |
 |---|---|
 | `scripts/logcat.sh` | Stream logs filtered to the app process (falls back to `Assist*` + `AndroidRuntime:E` tags when the app isn't running). |
-| `scripts/dump-a11y.sh` | Fire the phase-03 `com.assist.DEBUG_DUMP_SCREEN` broadcast and print the serialized screen outline the service logs. Flags: `--screenshot`, `--open "<label>"`, `--tap <id>`, `--swipe up\|down\|left\|right`, `--key BACK\|HOME\|RECENTS\|…`. Requires the app installed **and** its Accessibility service enabled. |
+| `scripts/dump-a11y.sh` | Fire the phase-03 `com.wisp.DEBUG_DUMP_SCREEN` broadcast and print the serialized screen outline the service logs. Flags: `--screenshot`, `--open "<label>"`, `--tap <id>`, `--swipe up\|down\|left\|right`, `--key BACK\|HOME\|RECENTS\|…`. Requires the app installed **and** its Accessibility service enabled. |
 | `scripts/screenshot.sh [out.png] [--open]` | Pull a PNG screenshot (`adb exec-out screencap`) for inspection. |
 | `scripts/bugreport.sh` | Full `adb bugreport` zip. `--anr` pulls `/data/anr` traces only; `--logcat` dumps the current buffer to a file. |
 
@@ -258,7 +258,7 @@ it (see RELEASE.md).
 | "Multiple devices online" error from a script | `scripts/devices.sh`, then `export ANDROID_SERIAL=<serial>`. |
 | Wireless `connect` fails | Phone and host must be on the same Wi-Fi; re-pair (the connect port rotates when Wireless debugging is toggled). |
 | `dump-a11y.sh` prints nothing | App not running, or its Accessibility service isn't enabled — `scripts/enable-service.sh`. |
-| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | A build signed by a different key is installed — `adb -s "$ANDROID_SERIAL" uninstall com.assist`, then redeploy. |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | A build signed by a different key is installed — `adb -s "$ANDROID_SERIAL" uninstall com.wisp`, then redeploy. |
 | Screenshot is empty/black | Unlock and wake the screen; some secure screens (e.g. password fields) block capture. |
 
 See also: [`README.md`](README.md) (build loop overview) and

@@ -21,7 +21,7 @@ conversation history. Also read `.claude/CONVENTIONS.md`.
 **Present (do not re-add):** Gradle Kotlin DSL, committed wrapper (Gradle 8.9),
 version catalog `gradle/libs.versions.toml`, 122 unit tests (`testDebugUnitTest`),
 a key-gated instrumented smoke test (`androidTest`,
-`com.assist.llm.anthropic.AnthropicSmokeTest`), portable OS-aware `scripts/env.sh`
+`com.wisp.llm.anthropic.AnthropicSmokeTest`), portable OS-aware `scripts/env.sh`
 (auto-generates gitignored `local.properties` from the resolved SDK), `.gitignore`,
 `proguard-rules.pro`.
 
@@ -35,7 +35,7 @@ a key-gated instrumented smoke test (`androidTest`,
 - No Kover/coverage, no dependabot, no pre-commit hook.
 
 ## Environment / fixed constraints (match these exactly)
-- App id `com.assist`; single `:app` module; `minSdk 30`, `target/compileSdk 35`.
+- App id `com.wisp`; single `:app` module; `minSdk 30`, `target/compileSdk 35`.
 - **JDK 17** (Temurin). AGP **8.7.3**, Gradle **8.9** (wrapper committed), Kotlin
   **2.0.21**, KSP **2.0.21-1.0.28**, Hilt 2.52, Room 2.6.1, Compose BOM 2024.10.01.
 - Pick tool versions **compatible with Kotlin 2.0.21 / AGP 8.7.3 / JDK 17**.

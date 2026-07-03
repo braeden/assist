@@ -5,7 +5,7 @@
 drawn over whatever app the agent is driving.
 
 **Prerequisites:** phase-06 (`AgentEventBus`, `AgentLoop.interrupt`, `ContextStatus`).
-**Parallelizable with 08.** Owns `com.assist.overlay`.
+**Parallelizable with 08.** Owns `com.wisp.overlay`.
 
 ## Deliverables
 1. **`OverlayService`** — the single foreground service (coordinate with phase-06
@@ -32,8 +32,8 @@ drawn over whatever app the agent is driving.
    an onboarding step to grant "Display over other apps".
 
 ## Contracts I consume
-- `com.assist.agent.AgentEventBus`, `AgentEvent`, `AgentLoop.interrupt()`
-- `com.assist.data.SessionRepository`, `ContextStatus`
+- `com.wisp.agent.AgentEventBus`, `AgentEvent`, `AgentLoop.interrupt()`
+- `com.wisp.data.SessionRepository`, `ContextStatus`
 
 ## Steps
 1. FGS + `WindowManager` add/remove of a trivial Compose bubble; verify it draws

@@ -6,7 +6,7 @@ safety gates, persist everything, and emit events for the overlay.
 
 **Prerequisites:** phases 03, 04, 05 complete. **Integration phase — sequential.**
 
-## Deliverables (all under `com.assist.agent`)
+## Deliverables (all under `com.wisp.agent`)
 1. **`AgentTool` registry** — the tool catalog from ARCHITECTURE.md as
    `ToolDef`s (name, JSON schema, description) fed to `LlmRequest.tools`. One
    source of truth; grouped: perception/control, user-interaction, context.
@@ -55,8 +55,8 @@ safety gates, persist everything, and emit events for the overlay.
    with a logging stub here; real impl in phase-08.
 
 ## Contracts I own (consumed by 07/08)
-- `com.assist.agent.AgentLoop`, `AgentEvent`, `AgentEventBus`
-- `com.assist.agent.UserIo` (interface)
+- `com.wisp.agent.AgentLoop`, `AgentEvent`, `AgentEventBus`
+- `com.wisp.agent.UserIo` (interface)
 - `AgentTool`/`ToolDef` registry, `ActionGate`
 
 ## Steps
@@ -78,7 +78,7 @@ safety gates, persist everything, and emit events for the overlay.
 ```bash
 ANTHROPIC_API_KEY=sk-ant-... bash scripts/install.sh
 # trigger the debug intent (adb broadcast or a temporary MainActivity text box):
-adb shell am broadcast -a com.assist.DEBUG_RUN --es intent "open the Clock app and start a 1 minute timer"
+adb shell am broadcast -a com.wisp.DEBUG_RUN --es intent "open the Clock app and start a 1 minute timer"
 bash scripts/logcat.sh   # watch AgentLoop + tool calls
 ```
 

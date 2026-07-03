@@ -9,10 +9,10 @@
 
 import java.util.Properties
 
-val appId = "com.assist"
+val appId = "com.wisp"
 val launcherActivity = "$appId/.ui.MainActivity"
 // phase-03 accessibility service component (created later; referenced by string).
-val accessibilityService = "$appId/$appId.service.AssistAccessibilityService"
+val accessibilityService = "$appId/$appId.service.WispAccessibilityService"
 
 fun resolveSdkDir(): File {
     System.getenv("ANDROID_HOME")?.takeIf { it.isNotBlank() }?.let { return File(it) }
@@ -28,32 +28,32 @@ fun resolveSdkDir(): File {
 val adbPath: String = File(resolveSdkDir(), "platform-tools/adb").absolutePath
 
 tasks.register<Exec>("listDevices") {
-    group = "assist"
+    group = "wisp"
     description = "List attached devices/emulators."
     commandLine(adbPath, "devices", "-l")
 }
 
 tasks.register<Exec>("launchApp") {
-    group = "assist"
+    group = "wisp"
     description = "Launch MainActivity on the target device (respects ANDROID_SERIAL)."
     commandLine(adbPath, "shell", "am", "start", "-n", launcherActivity)
 }
 
 tasks.register<Exec>("stopApp") {
-    group = "assist"
+    group = "wisp"
     description = "Force-stop the app on the target device."
     commandLine(adbPath, "shell", "am", "force-stop", appId)
 }
 
 tasks.register<Exec>("runApp") {
-    group = "assist"
+    group = "wisp"
     description = "Install the debug APK, then launch it."
     dependsOn(":app:installDebug")
     commandLine(adbPath, "shell", "am", "start", "-n", launcherActivity)
 }
 
 tasks.register<Exec>("enableAccessibility") {
-    group = "assist"
+    group = "wisp"
     description = "Enable the Assist accessibility service (emulator/rooted only; " +
         "on a locked-down device use scripts/enable-service.sh)."
     commandLine(

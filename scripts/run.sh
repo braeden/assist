@@ -5,4 +5,4 @@ source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 require_gradle
 export ANDROID_SERIAL="$(target_device)"
 echo ">> runApp (install + launch) on $ANDROID_SERIAL (JAVA_HOME=$JAVA_HOME)"
-"$GRADLEW" -p "$ASSIST_ROOT" runApp "$@"
+"$GRADLEW" -p "$WISP_ROOT" runApp "$@"

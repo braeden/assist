@@ -6,7 +6,7 @@ introspect and shrink its own context.
 
 **Prerequisites:** phase-02. **Parallelizable with 03 and 04** (owns `data/`).
 
-## Deliverables (all under `com.assist.data`)
+## Deliverables (all under `com.wisp.data`)
 1. **Room schema:**
    - `SessionEntity(id, title, createdAt, updatedAt, modelDefault, status,
      systemPromptVersion)`
@@ -45,7 +45,7 @@ introspect and shrink its own context.
      happened. Keep notes intact.
 
 ## Contracts I own (consumed by phase-06/07)
-- `com.assist.data.SessionRepository` + all entities/DAOs
+- `com.wisp.data.SessionRepository` + all entities/DAOs
 - `ContextStatus`, `ContextTracker`, `CostCalculator`
 - Media storage layout under app-private files dir
 
@@ -64,7 +64,7 @@ introspect and shrink its own context.
 
 ## Verification
 ```bash
-./gradlew :app:testDebugUnitTest --tests "com.assist.data.*"
+./gradlew :app:testDebugUnitTest --tests "com.wisp.data.*"
 ```
 
 ## Notes

@@ -9,6 +9,6 @@ plugins {
     alias(libs.plugins.hilt) apply false
 }
 
-// Device inner-loop tasks (assist group): runApp, launchApp, stopApp,
+// Device inner-loop tasks (wisp group): runApp, launchApp, stopApp,
 // enableAccessibility, listDevices. See gradle/device.gradle.kts.
 apply(from = "gradle/device.gradle.kts")

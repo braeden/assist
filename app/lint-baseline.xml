@@ -7,8 +7,8 @@
         errorLine1="        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) =="
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/assist/ui/Permissions.kt"
-            line="31"
+            file="src/main/java/com/wisp/ui/Permissions.kt"
+            line="30"
             column="52"/>
     </issue>
 
@@ -545,6 +545,28 @@
         message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 30. Merge all the resources in this folder into `mipmap-anydpi`.">
         <location
             file="src/main/res/mipmap-anydpi-v26"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.onboarding_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;onboarding_title&quot;>Wisp&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="5"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.onboarding_subtitle` appears to be unused"
+        errorLine1="    &lt;string name=&quot;onboarding_subtitle&quot;>On-device AI phone agent&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="6"
+            column="13"/>
     </issue>
 
     <issue

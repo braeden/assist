@@ -12,10 +12,10 @@ plugins {
 // --- Release signing --------------------------------------------------------
 // Keystore coordinates are read from environment variables (CI) or Gradle
 // properties (local dev) — never committed. See RELEASE.md.
-//   ASSIST_KEYSTORE_FILE / assistKeystoreFile         path to the .jks/.keystore
-//   ASSIST_KEYSTORE_PASSWORD / assistKeystorePassword store password
-//   ASSIST_KEY_ALIAS / assistKeyAlias                 key alias
-//   ASSIST_KEY_PASSWORD / assistKeyPassword           key password (defaults to
+//   WISP_KEYSTORE_FILE / wispKeystoreFile         path to the .jks/.keystore
+//   WISP_KEYSTORE_PASSWORD / wispKeystorePassword store password
+//   WISP_KEY_ALIAS / wispKeyAlias                 key alias
+//   WISP_KEY_PASSWORD / wispKeyPassword           key password (defaults to
 //                                                     the store password)
 // If none are set, the release build gracefully falls back to the debug signing
 // config so `assembleRelease` still yields an installable (debug-signed) APK.
@@ -27,20 +27,20 @@ fun releaseSecret(
     System.getenv(envName)?.takeIf { it.isNotBlank() }
         ?: (project.findProperty(propName) as String?)?.takeIf { it.isNotBlank() }
 
-val releaseStoreFile = releaseSecret("ASSIST_KEYSTORE_FILE", "assistKeystoreFile")
-val releaseStorePassword = releaseSecret("ASSIST_KEYSTORE_PASSWORD", "assistKeystorePassword")
-val releaseKeyAlias = releaseSecret("ASSIST_KEY_ALIAS", "assistKeyAlias")
+val releaseStoreFile = releaseSecret("WISP_KEYSTORE_FILE", "wispKeystoreFile")
+val releaseStorePassword = releaseSecret("WISP_KEYSTORE_PASSWORD", "wispKeystorePassword")
+val releaseKeyAlias = releaseSecret("WISP_KEY_ALIAS", "wispKeyAlias")
 val releaseKeyPassword =
-    releaseSecret("ASSIST_KEY_PASSWORD", "assistKeyPassword") ?: releaseStorePassword
+    releaseSecret("WISP_KEY_PASSWORD", "wispKeyPassword") ?: releaseStorePassword
 val hasReleaseSigning =
     releaseStoreFile != null && releaseStorePassword != null && releaseKeyAlias != null
 
 android {
-    namespace = "com.assist"
+    namespace = "com.wisp"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.assist"
+        applicationId = "com.wisp"
         minSdk = 30
         targetSdk = 35
         versionCode = 1

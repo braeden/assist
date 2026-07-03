@@ -91,7 +91,7 @@ shapes):**
 
 ## Deliverables
 
-### 1. Extensible tool seam (`com.assist.llm`) — additive
+### 1. Extensible tool seam (`com.wisp.llm`) — additive
 Generalize the tool model so it carries both client tools and provider tools
 **without leaking Anthropic types** into `llm/`:
 
@@ -116,7 +116,7 @@ sealed interface ToolSpec {
 - The Anthropic impl maps `ProviderTool("memory_20250818","memory")` to the SDK's
   `BetaMemoryTool20250818`, and `ClientTool` to a schema tool (+`strict`).
 
-### 2. Message-seam additions (`com.assist.llm`) — additive
+### 2. Message-seam additions (`com.wisp.llm`) — additive
 - Add `Role.SYSTEM` (or a dedicated `LlmMessage` factory) so the message list can
   carry a mid-conversation system turn. Document the placement constraints on the
   type. Phase-05's `buildLlmMessages` and phase-04's mapper must pass these
@@ -124,7 +124,7 @@ sealed interface ToolSpec {
 - Add `speed: Speed = STANDARD` to `LlmRequest` where `enum Speed { STANDARD, FAST }`.
 - Add `speed: Speed?` to `Usage`/`LlmResponse` (populate from `usage.speed`).
 
-### 3. Memory subsystem (`com.assist.memory` + `data/`)
+### 3. Memory subsystem (`com.wisp.memory` + `data/`)
 - **`MemoryStore`** — executes the six memory commands over **app-private files**
   at `filesDir/memories`, with strict path-traversal protection, size caps, and
   the exact return/error strings from the doc. Framework-free core (path math +
@@ -182,10 +182,10 @@ sealed interface ToolSpec {
 ---
 
 ## Contracts I own (consumed by later work)
-- `com.assist.llm.ToolSpec` (+ `Speed`, `Role.SYSTEM`, `speed` on request/usage).
-- `com.assist.memory.MemoryStore` + the `/memories` storage layout.
-- `com.assist.data.TaskRecipeEntity` + `TaskMemoryRepository`.
-- `com.assist.agent.SessionSteering`.
+- `com.wisp.llm.ToolSpec` (+ `Speed`, `Role.SYSTEM`, `speed` on request/usage).
+- `com.wisp.memory.MemoryStore` + the `/memories` storage layout.
+- `com.wisp.data.TaskRecipeEntity` + `TaskMemoryRepository`.
+- `com.wisp.agent.SessionSteering`.
 
 ## Steps
 1. Seam additions (`ToolSpec`, `Speed`, `Role.SYSTEM`, usage.speed) — compile.

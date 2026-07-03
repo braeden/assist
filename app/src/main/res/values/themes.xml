@@ -1,7 +1,7 @@
 <resources>
     <!-- Compose supplies the real Material3 theme (ui/theme). This XML theme only
          needs to give the window a sane (no action bar) base before Compose loads. -->
-    <style name="Theme.Assist" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.Wisp" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/surface</item>
         <item name="android:statusBarColor">@color/surface</item>
         <item name="android:windowLightStatusBar">true</item>

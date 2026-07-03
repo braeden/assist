@@ -5,7 +5,7 @@
 like Siri/Google/ChatGPT voice.
 
 **Prerequisites:** phase-06 (`UserIo` interface, `AgentLoop.interrupt`,
-`AgentEventBus`). **Parallelizable with 07.** Owns `com.assist.voice`.
+`AgentEventBus`). **Parallelizable with 07.** Owns `com.wisp.voice`.
 
 **Design reference:** [`../voice-architecture.md`](../voice-architecture.md) —
 the swappable STT/TTS/wake seam and the SpeechRecognizer/TextToSpeech findings.
@@ -40,7 +40,7 @@ The `Speaker`/`Listener` below are the `android`-provider impls of
 7. **Audio focus** management (ducking, pausing music, headset routing).
 
 ## Contracts I own / consume
-- Provide `com.assist.voice.VoiceUserIo` bound to `com.assist.agent.UserIo` (Hilt).
+- Provide `com.wisp.voice.VoiceUserIo` bound to `com.wisp.agent.UserIo` (Hilt).
 - Consume `AgentEventBus`, `AgentLoop.interrupt()`, `SessionRepository`.
 
 ## Steps

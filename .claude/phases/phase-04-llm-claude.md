@@ -25,13 +25,13 @@ instrumented test); fall back to B if it doesn't run cleanly on device. Either
 way, **all Anthropic types stay inside `llm/anthropic/`.**
 
 ## Deliverables
-1. **`com.assist.llm`** interfaces/models exactly as in ARCHITECTURE.md:
+1. **`com.wisp.llm`** interfaces/models exactly as in ARCHITECTURE.md:
    `LlmClient`, `LlmRequest`, `LlmMessage`, `SystemBlock`, `ToolDef`, `ToolCall`,
    `LlmStreamEvent` (sealed: `TextDelta`, `ThinkingDelta`, `ToolUseStart`,
    `ToolUseArgsDelta`, `Usage`, `Done`), `LlmResponse`, `Usage`, `Effort`.
    Content blocks must support **text** and **image (base64)** for screenshots,
    and **tool_result** messages carrying text and/or images.
-2. **`com.assist.llm.anthropic.AnthropicLlmClient : LlmClient`** implementing:
+2. **`com.wisp.llm.anthropic.AnthropicLlmClient : LlmClient`** implementing:
    - Auth from `SecretStore` (never hardcode; header `x-api-key`).
    - `model` from `LlmRequest` (default `claude-opus-4-8`).
    - **Adaptive thinking** (`thinking: {type:"adaptive"}`) + `output_config.effort`.
@@ -60,7 +60,7 @@ way, **all Anthropic types stay inside `llm/anthropic/`.**
    when the key is absent.
 
 ## Contracts I own (consumed by phase-06/10)
-- All of `com.assist.llm.*` (interfaces + models)
+- All of `com.wisp.llm.*` (interfaces + models)
 - `AnthropicLlmClient`, `ModelRouter`
 - DI provider for `LlmClient` (Hilt) reading `SecretStore`
 
@@ -76,7 +76,7 @@ way, **all Anthropic types stay inside `llm/anthropic/`.**
 ```bash
 ANTHROPIC_API_KEY=sk-ant-... bash scripts/install.sh   # if instrumented test
 ANTHROPIC_API_KEY=sk-ant-... ./gradlew :app:connectedDebugAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=com.assist.llm.anthropic.AnthropicSmokeTest
+  -Pandroid.testInstrumentationRunnerArguments.class=com.wisp.llm.anthropic.AnthropicSmokeTest
 ```
 
 ## Human checkpoint

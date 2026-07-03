@@ -10,7 +10,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 serial="$(target_device)"
 
-dir="$ASSIST_ROOT/captures"
+dir="$WISP_ROOT/captures"
 mkdir -p "$dir"
 ts="$(date +%Y%m%d-%H%M%S)"
 safe="${serial//[:.]/_}"
@@ -41,7 +41,7 @@ case "$mode" in
     echo ">> capturing full bugreport from $serial (this can take a minute)..."
     # Modern adb writes a .zip; give it the basename and let adb append the extension.
     "$ADB" -s "$serial" bugreport "$out"
-    echo ">> saved ${out}.zip (unzip and read bugreport-*.txt; grep for 'AssistA11yService', 'AndroidRuntime', 'ANR in com.assist')"
+    echo ">> saved ${out}.zip (unzip and read bugreport-*.txt; grep for 'AssistA11yService', 'AndroidRuntime', 'ANR in com.wisp')"
     ;;
 
   *) echo "ERROR: unknown mode '$mode' (use --anr, --logcat, or no arg for full)" >&2; exit 1 ;;

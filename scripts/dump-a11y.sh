@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Trigger the phase-03 accessibility screen dump on the target device and print
-# the result. Fires the com.assist.DEBUG_DUMP_SCREEN broadcast that
+# the result. Fires the com.wisp.DEBUG_DUMP_SCREEN broadcast that
 # AssistAccessibilityService listens for, then tails the "SCREEN DUMP" it logs.
 #
 # Requires: the app installed AND its Accessibility service enabled
@@ -31,7 +31,7 @@ done
 echo ">> clearing logcat + firing DEBUG_DUMP_SCREEN on $serial"
 "$ADB" -s "$serial" logcat -c || true
 "$ADB" -s "$serial" shell am broadcast \
-  -a com.assist.DEBUG_DUMP_SCREEN \
+  -a com.wisp.DEBUG_DUMP_SCREEN \
   ${extras[@]+"${extras[@]}"} >/dev/null
 
 # The service handles the broadcast on a coroutine; give it a moment to log.

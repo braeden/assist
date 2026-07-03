@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Assist"
+rootProject.name = "Wisp"
 include(":app")

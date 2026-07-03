@@ -5,7 +5,7 @@ assembly code that composes it with the live tool catalog and device context.
 
 **Prerequisites:** phase-04 (`LlmClient`/`SystemBlock`, tool defs shape). Can be
 drafted anytime after 04; finalize once phase-06 tools are stable. Owns
-`com.assist.prompt`.
+`com.wisp.prompt`.
 
 ## Deliverables
 1. **`SystemPromptBuilder`** → `List<SystemBlock>` with `cache_control` on the
@@ -36,7 +36,7 @@ drafted anytime after 04; finalize once phase-06 tools are stable. Owns
    `open_app`; ambiguous request → `ask`). Gate real-model evals on the API key.
 
 ## Contracts I own / consume
-- Own `com.assist.prompt.SystemPromptBuilder`, `assets/system_prompt.md`.
+- Own `com.wisp.prompt.SystemPromptBuilder`, `assets/system_prompt.md`.
 - Consume the `AgentTool` registry (phase-06) and device info helpers.
 
 ## Acceptance criteria
@@ -47,9 +47,9 @@ drafted anytime after 04; finalize once phase-06 tools are stable. Owns
 
 ## Verification
 ```bash
-./gradlew :app:testDebugUnitTest --tests "com.assist.prompt.*"
+./gradlew :app:testDebugUnitTest --tests "com.wisp.prompt.*"
 ANTHROPIC_API_KEY=sk-ant-... ./gradlew :app:connectedDebugAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=com.assist.prompt.PromptEvalTest
+  -Pandroid.testInstrumentationRunnerArguments.class=com.wisp.prompt.PromptEvalTest
 ```
 
 ## Notes

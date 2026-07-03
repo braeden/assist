@@ -4,7 +4,7 @@
 Siri/Google/Alexa. Explicitly optional / later — build behind a setting.
 
 **Prerequisites:** phase-08 (voice pipeline, `Listener`, audio focus).
-**Parallelizable with 10/11.** Owns wake-word code in `com.assist.voice`.
+**Parallelizable with 10/11.** Owns wake-word code in `com.wisp.voice`.
 
 **Design reference:** [`../voice-architecture.md`](../voice-architecture.md) —
 implement the **`WakeWordDetector`** seam (own `AudioRecord` tap, NOT
@@ -33,7 +33,7 @@ on-device detector (Porcupine default) is required.
    don't fight over the microphone.
 
 ## Contracts I consume
-- `com.assist.voice.Listener`, `Speaker`, `AudioSessionArbiter` (new, owned here
+- `com.wisp.voice.Listener`, `Speaker`, `AudioSessionArbiter` (new, owned here
   or shared with 08), `AgentLoop`.
 
 ## Acceptance criteria

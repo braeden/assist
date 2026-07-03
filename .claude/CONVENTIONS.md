@@ -1,7 +1,7 @@
 # Conventions (shared — keep parallel work compatible)
 
 ## Identifiers
-- Application ID / namespace: `com.assist`
+- Application ID / namespace: `com.wisp`
 - App module: `:app` (single module to start; split later only if needed)
 - Min SDK: **30** (needed for `AccessibilityService.takeScreenshot`). Target/compile SDK: **35**.
 - JDK: **17** (Android Gradle Plugin requirement). Use the JBR bundled with

@@ -7,11 +7,11 @@ package structure, DI, and permission onboarding that all later phases build on.
 
 ## Deliverables
 1. **Gradle project** (Kotlin DSL): root `build.gradle.kts`, `settings.gradle.kts`,
-   `gradle/libs.versions.toml`, `:app` module. Configure: `namespace com.assist`,
+   `gradle/libs.versions.toml`, `:app` module. Configure: `namespace com.wisp`,
    `minSdk 30`, `compile/targetSdk 35`, Compose, Hilt, KSP, kotlinx-serialization,
    kotlinx-coroutines, androidx.security-crypto, Room (deps declared, unused ok).
    Gradle wrapper committed (`./gradlew` works).
-2. **Package skeleton** under `com.assist` matching ARCHITECTURE.md (empty
+2. **Package skeleton** under `com.wisp` matching ARCHITECTURE.md (empty
    packages with a `package-info`-style KDoc placeholder or a single stub each):
    `service/ llm/ llm/anthropic/ agent/ data/ voice/ overlay/ ui/ di/ prompt/`.
 3. **`AssistApplication`** (`@HiltAndroidApp`).
@@ -34,7 +34,7 @@ package structure, DI, and permission onboarding that all later phases build on.
 7. **DI:** `di/AppModule` providing `SecretStore` and app-scoped coroutine scope.
 
 ## Contracts I own (consumed by later phases)
-- `com.assist.data.SecretStore`
+- `com.wisp.data.SecretStore`
 - App theme + a `Permissions` helper (`isAccessibilityEnabled`, `canDrawOverlays`, etc.)
 
 ## Steps

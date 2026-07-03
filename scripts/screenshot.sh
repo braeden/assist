@@ -22,7 +22,7 @@ for arg in "$@"; do
 done
 
 if [[ -z "$out" ]]; then
-  dir="$ASSIST_ROOT/captures"
+  dir="$WISP_ROOT/captures"
   mkdir -p "$dir"
   ts="$(date +%Y%m%d-%H%M%S)"
   # Sanitize serial for filenames (wireless serials look like ip:port).

@@ -81,15 +81,15 @@ implementation detail and branch on the **named** constants only.
 
 ---
 
-## 2. The swappable seam (`com.assist.voice`)
+## 2. The swappable seam (`com.wisp.voice`)
 
-Mirror the `LlmClient` pattern: **provider-agnostic interfaces in `com.assist.voice`;
+Mirror the `LlmClient` pattern: **provider-agnostic interfaces in `com.wisp.voice`;
 each backend isolated in its own subpackage** (`voice/android`, `voice/cloud`,
 `voice/realtime`, `voice/wake`). No backend SDK types leak past the interface.
 Interfaces are illustrative shapes for the phase-08/09 implementer, not frozen.
 
 ```kotlin
-package com.assist.voice
+package com.wisp.voice
 
 // ── STT ───────────────────────────────────────────────────────────────
 interface SttEngine {
