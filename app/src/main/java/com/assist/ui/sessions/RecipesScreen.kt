@@ -36,7 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
  */
 @Composable
 fun RecipesScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     viewModel: RecipesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -58,7 +58,7 @@ fun RecipesScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text("Learned tasks", style = MaterialTheme.typography.headlineMedium)
-                    TextButton(onClick = onBack) { Text("Back") }
+                    if (onBack != null) TextButton(onClick = onBack) { Text("Back") }
                 }
             }
             item {

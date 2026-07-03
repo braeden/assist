@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import android.widget.Toast
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -27,9 +28,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.assist.R
+import com.assist.agent.AgentService
+import com.assist.overlay.OverlayService
+import com.assist.ui.Permissions
 
 /**
  * Sessions list (phase-12, the lead surface): a scrollable list of every session
@@ -40,16 +48,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun SessionsScreen(
     onOpenSession: (Long) -> Unit,
-    onOpenRecipes: () -> Unit,
     viewModel: SessionsViewModel = hiltViewModel(),
-    settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
-    val fastMode by settingsViewModel.fastMode.collectAsState()
-    val agentModel by settingsViewModel.agentModel.collectAsState()
 
     var renameTarget by remember { mutableStateOf<SessionRowUi?>(null) }
     var deleteTarget by remember { mutableStateOf<SessionRowUi?>(null) }
+    var showStartDialog by remember { mutableStateOf(false) }
 
     Scaffold { inner ->
         LazyColumn(
@@ -66,17 +72,15 @@ fun SessionsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text("Sessions", style = MaterialTheme.typography.headlineMedium)
-                    Button(onClick = { viewModel.newSession(onOpenSession) }) { Text("New") }
+                    OutlinedButton(onClick = { viewModel.newSession(onOpenSession) }) { Text("New") }
                 }
             }
             item {
-                OutlinedButton(
-                    onClick = onOpenRecipes,
+                Button(
+                    onClick = { showStartDialog = true },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Learned tasks") }
+                ) { Text("Start a task") }
             }
-            item { ModelPickerCard(selected = agentModel, onSelect = settingsViewModel::setAgentModel) }
-            item { FastModeCard(enabled = fastMode, onToggle = settingsViewModel::setFastMode) }
 
             if (!state.loading && state.rows.isEmpty()) {
                 item {
@@ -97,6 +101,27 @@ fun SessionsScreen(
                 )
             }
         }
+    }
+
+    if (showStartDialog) {
+        StartTaskDialog(
+            onDismiss = { showStartDialog = false },
+            onStart = { intent ->
+                // Launch the agent loop in its foreground service, and surface the
+                // overlay (if permitted) so the run is visible while it drives apps.
+                ContextCompat.startForegroundService(
+                    context,
+                    AgentService.runIntent(context, intent),
+                )
+                if (Permissions.canDrawOverlays(context)) OverlayService.start(context)
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.start_session_started, intent.take(40)),
+                    Toast.LENGTH_SHORT,
+                ).show()
+                showStartDialog = false
+            },
+        )
     }
 
     renameTarget?.let { target ->
@@ -183,5 +208,34 @@ private fun RenameDialog(
             ) { Text("Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun StartTaskDialog(
+    onDismiss: () -> Unit,
+    onStart: (String) -> Unit,
+) {
+    var intent by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.start_session)) },
+        text = {
+            OutlinedTextField(
+                value = intent,
+                onValueChange = { intent = it },
+                label = { Text(stringResource(R.string.start_session_hint)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onStart(intent.trim()) },
+                enabled = intent.isNotBlank(),
+            ) { Text(stringResource(R.string.start_session_go)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
     )
 }

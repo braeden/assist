@@ -6,8 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -44,25 +44,27 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/** Top-level bottom-nav destinations. */
+/** Top-level bottom-nav destinations. Sessions is the landing surface. */
 private sealed class Tab(val route: String, val label: String, val icon: ImageVector) {
-    data object Home : Tab("home", "Home", Icons.Filled.Home)
     data object Sessions : Tab("sessions", "Sessions", Icons.Filled.List)
     data object Memory : Tab("recipes", "Memory", Icons.Filled.Star)
+    data object Settings : Tab("settings", "Settings", Icons.Filled.Settings)
 }
 
 private const val SESSION_DETAIL_ROUTE = "session/{sessionId}"
 
 /**
- * App shell: a bottom navigation bar over a [NavHost]. Home is the onboarding /
- * control screen; Sessions lists past runs (tap → transcript); Memory browses
- * learned task recipes. The session transcript is a nested route under the
- * Sessions tab, which stays selected while it's shown.
+ * App shell: a bottom navigation bar over a [NavHost]. Sessions is the landing
+ * surface (list of runs + "Start a task"); Memory browses learned task recipes;
+ * Settings holds permissions, the API key, the model picker, and debug tools. The
+ * session transcript is a nested route under the Sessions tab, which stays
+ * selected while it's shown. Each tab keeps its own back stack, so system-back
+ * pops nested routes first, then returns to Sessions, then exits.
  */
 @Composable
 private fun AssistApp() {
     val nav = rememberNavController()
-    val tabs = listOf(Tab.Home, Tab.Sessions, Tab.Memory)
+    val tabs = listOf(Tab.Sessions, Tab.Memory, Tab.Settings)
 
     Scaffold(
         bottomBar = {
@@ -91,17 +93,11 @@ private fun AssistApp() {
     ) { inner ->
         NavHost(
             navController = nav,
-            startDestination = Tab.Home.route,
+            startDestination = Tab.Sessions.route,
             modifier = Modifier.padding(inner),
         ) {
-            composable(Tab.Home.route) { OnboardingScreen() }
             composable(Tab.Sessions.route) {
-                SessionsScreen(
-                    onOpenSession = { id -> nav.navigate("session/$id") },
-                    onOpenRecipes = {
-                        nav.navigate(Tab.Memory.route) { launchSingleTop = true }
-                    },
-                )
+                SessionsScreen(onOpenSession = { id -> nav.navigate("session/$id") })
             }
             composable(
                 route = SESSION_DETAIL_ROUTE,
@@ -109,9 +105,9 @@ private fun AssistApp() {
             ) {
                 SessionDetailScreen(onBack = { nav.popBackStack() })
             }
-            composable(Tab.Memory.route) {
-                RecipesScreen(onBack = { nav.popBackStack() })
-            }
+            // Memory is a top-level tab → no back affordance.
+            composable(Tab.Memory.route) { RecipesScreen() }
+            composable(Tab.Settings.route) { SettingsScreen() }
         }
     }
 }
