@@ -32,7 +32,7 @@ jobs:
       # is not reliably available in step-level conditions). Masked in logs.
       WISP_KEYSTORE_BASE64: ${{ secrets.WISP_KEYSTORE_BASE64 }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up JDK 17 (Temurin)
         uses: actions/setup-java@v4
