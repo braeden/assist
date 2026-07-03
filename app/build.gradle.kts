@@ -189,6 +189,9 @@ dependencies {
     // HTTP transport for the Claude client (phase-04)
     implementation(libs.okhttp)
 
+    // Wake word detection (phase-09) — openWakeWord ONNX runtime port
+    implementation(libs.openwakeword)
+
     // Test
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

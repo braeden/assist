@@ -401,6 +401,19 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   crash. **Human checkpoint:** free Picovoice AccessKey (console.picovoice.ai)
   + real-device mic for live detection; custom "Hey Wisp" needs a
   Console-trained `.ppn` asset.
+- **Switched to openWakeWord** (Porcupine removed — Picovoice dropped its free
+  tier): `voice/wake/OpenWakeWordDetector` uses `xyz.rementia:openwakeword`
+  0.1.5 (Kotlin openWakeWord port, Apache-2.0, ONNX Runtime; engine owns its own
+  16 kHz `AudioRecord`) with the same arbiter re-arm loop; no key needed —
+  `isAvailable()` just checks the assets. Models ship in `app/src/main/assets/`
+  **at the root** (`melspectrogram.onnx` / `embedding_model.onnx` paths are
+  hardcoded in the library; `alexa_v0.1.onnx` alongside — from the openWakeWord
+  v0.5.1 GitHub release; models are CC BY-NC-SA 4.0, fine for personal
+  sideload). Sensitivity→threshold: `1 - sensitivity` clamped 0.05..0.95
+  (default 0.5 → oww's recommended 0.5); ~2s debounce (`DetectionDebouncer` +
+  engine cooldown). Verified on emulator: arm from Settings → mic FGS +
+  notification, ONNX loads, live per-frame scores in logcat, clean disarm;
+  **real "alexa" detection needs a physical mic — device checkpoint pending.**
 
 ### Next
 - **Follow-ups:** unify `AgentService`+`OverlayService` into one coordinated FGS;

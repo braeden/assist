@@ -2,9 +2,12 @@ package com.wisp.voice.wake
 
 /**
  * Registry of the wake-word models we ship (openWakeWord pretrained models,
- * ONNX, under `assets/openwakeword/`). openWakeWord's pretrained models are
- * CC BY-NC-SA 4.0 — fine for this personal sideload app, not for commercial
- * redistribution. A custom "Hey Wisp" model is a later training exercise.
+ * ONNX, at the `assets/` root — the openwakeword-android-kt library hardcodes
+ * the shared preprocessing model paths as `melspectrogram.onnx` /
+ * `embedding_model.onnx` relative to the assets root, so all three files live
+ * there). openWakeWord's pretrained models are CC BY-NC-SA 4.0 — fine for this
+ * personal sideload app, not for commercial redistribution. A custom
+ * "Hey Wisp" model is a later training exercise.
  */
 data class WakeWordModelInfo(
     /** Stable name persisted in settings ([com.wisp.data.SettingsStore.wakeKeyword]). */
@@ -16,15 +19,18 @@ data class WakeWordModelInfo(
 )
 
 object WakeWords {
-    /** Shared openWakeWord preprocessing models (all wake models need both). */
-    const val MELSPECTROGRAM_ASSET = "openwakeword/melspectrogram.onnx"
-    const val EMBEDDING_ASSET = "openwakeword/embedding_model.onnx"
+    /**
+     * Shared openWakeWord preprocessing models (all wake models need both).
+     * Paths are fixed by the library — it opens exactly these asset names.
+     */
+    const val MELSPECTROGRAM_ASSET = "melspectrogram.onnx"
+    const val EMBEDDING_ASSET = "embedding_model.onnx"
 
     val ALEXA =
         WakeWordModelInfo(
             name = "alexa",
             label = "Alexa",
-            assetPath = "openwakeword/alexa_v0.1.onnx",
+            assetPath = "alexa_v0.1.onnx",
         )
 
     /** Models available in the Settings picker. */

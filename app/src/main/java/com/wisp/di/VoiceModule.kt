@@ -17,7 +17,7 @@ import com.wisp.voice.android.AndroidTtsEngine
 import com.wisp.voice.WakeWordDetector
 import com.wisp.voice.android.AndroidVoiceProvider
 import com.wisp.voice.android.BargeInDetector
-import com.wisp.voice.wake.NoopWakeWordDetector
+import com.wisp.voice.wake.OpenWakeWordDetector
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -78,7 +78,10 @@ object VoiceModule {
 
     @Provides
     @Singleton
-    fun provideWakeWordDetector(): WakeWordDetector = NoopWakeWordDetector()
+    fun provideWakeWordDetector(
+        @ApplicationContext context: Context,
+        arbiter: AudioSessionArbiter,
+    ): WakeWordDetector = OpenWakeWordDetector(context, arbiter)
 
     @Provides
     @Singleton

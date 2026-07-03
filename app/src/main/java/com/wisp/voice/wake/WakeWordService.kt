@@ -17,6 +17,7 @@ import com.wisp.overlay.OverlayService
 import com.wisp.voice.WakeConfig
 import com.wisp.voice.WakeWordDetector
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -64,6 +65,8 @@ class WakeWordService : Service() {
                             OverlayService.startListening(this@WakeWordService, newSession = false)
                         }
                     }.onFailure { t ->
+                        // Normal teardown/re-arm cancellation is not a failure.
+                        if (t is CancellationException) throw t
                         Log.e(TAG, "wake word unavailable, stopping", t)
                         stopSelf()
                     }
