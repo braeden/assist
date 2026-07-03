@@ -14,7 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,50 +42,48 @@ fun RecipesScreen(
     val viewing by viewModel.viewing.collectAsState()
     var deleteTarget by remember { mutableStateOf<RecipeRowUi?>(null) }
 
-    Scaffold { inner ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(inner)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text("Learned tasks", style = MaterialTheme.typography.headlineMedium)
-                    if (onBack != null) TextButton(onClick = onBack) { Text("Back") }
-                }
+    // No inner Scaffold — renders inside MainActivity's Scaffold (see SessionsScreen).
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text("Learned tasks", style = MaterialTheme.typography.headlineMedium)
+                if (onBack != null) TextButton(onClick = onBack) { Text("Back") }
             }
+        }
+        item {
+            Text(
+                "Recipes the agent recorded under /memories/tasks. It checks these " +
+                    "first to complete repeat tasks faster.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        if (!state.loading && state.rows.isEmpty()) {
             item {
                 Text(
-                    "Recipes the agent recorded under /memories/tasks. It checks these " +
-                        "first to complete repeat tasks faster.",
-                    style = MaterialTheme.typography.bodySmall,
+                    "No recipes yet. The agent writes one after finishing a novel task.",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
 
-            if (!state.loading && state.rows.isEmpty()) {
-                item {
-                    Text(
-                        "No recipes yet. The agent writes one after finishing a novel task.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            items(state.rows, key = { it.id }) { row ->
-                RecipeCard(
-                    row = row,
-                    onView = { viewModel.viewContent(row.id, row.title) },
-                    onDelete = { deleteTarget = row },
-                )
-            }
+        items(state.rows, key = { it.id }) { row ->
+            RecipeCard(
+                row = row,
+                onView = { viewModel.viewContent(row.id, row.title) },
+                onDelete = { deleteTarget = row },
+            )
         }
     }
 

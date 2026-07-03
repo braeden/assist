@@ -12,7 +12,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,61 +39,59 @@ fun SessionDetailScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    Scaffold { inner ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(inner)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            state.title,
-                            style = MaterialTheme.typography.titleLarge,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        val sub = listOf(state.status, modelLabel(state.model))
-                            .filter { it.isNotBlank() }
-                            .joinToString(" · ")
-                        if (sub.isNotBlank()) {
-                            Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+    // No inner Scaffold — renders inside MainActivity's Scaffold (see SessionsScreen).
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        state.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    val sub = listOf(state.status, modelLabel(state.model))
+                        .filter { it.isNotBlank() }
+                        .joinToString(" · ")
+                    if (sub.isNotBlank()) {
+                        Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    TextButton(onClick = onBack) { Text("Back") }
                 }
+                TextButton(onClick = onBack) { Text("Back") }
             }
+        }
 
-            // Mid-session model switcher: a running loop re-reads the session's
-            // model every step, so this takes effect on the next request.
+        // Mid-session model switcher: a running loop re-reads the session's
+        // model every step, so this takes effect on the next request.
+        item {
+            ModelChips(
+                selected = AgentModel.fromModelId(state.model),
+                onSelect = viewModel::setModel,
+            )
+        }
+
+        state.context?.let { item { ContextPanel(it) } }
+
+        if (!state.loading && state.items.isEmpty()) {
             item {
-                ModelChips(
-                    selected = AgentModel.fromModelId(state.model),
-                    onSelect = viewModel::setModel,
+                Text(
+                    "No messages yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-
-            state.context?.let { item { ContextPanel(it) } }
-
-            if (!state.loading && state.items.isEmpty()) {
-                item {
-                    Text(
-                        "No messages yet.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            items(state.items, key = { it.key }) { item -> TranscriptItem(item) }
         }
+
+        items(state.items, key = { it.key }) { item -> TranscriptItem(item) }
     }
 }
 

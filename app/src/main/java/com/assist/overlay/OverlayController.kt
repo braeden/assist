@@ -14,6 +14,8 @@ import com.assist.di.AppScope
 import com.assist.voice.AudioSessionArbiter
 import com.assist.voice.MicOwner
 import com.assist.voice.SttEngine
+import com.assist.voice.SttEvent
+import com.assist.voice.SttException
 import com.assist.voice.TtsEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -249,9 +251,15 @@ class OverlayController @Inject constructor(
     /** True while a dictation capture is in flight — drives the mics' active state. */
     val dictating: StateFlow<Boolean> = _dictating.asStateFlow()
 
+    private val _dictationText = MutableStateFlow("")
+
+    /** Live partial transcript while dictating — drives the caption under the overlay. */
+    val dictationText: StateFlow<String> = _dictationText.asStateFlow()
+
     /**
-     * Dictate a reply: capture one spoken utterance and return the transcript for
-     * the reply field to fill in. Goes through the shared [AudioSessionArbiter] at
+     * Dictate a reply: capture one spoken utterance and return the transcript.
+     * Streams recognition so [dictationText] carries live partials for the
+     * caption. Goes through the shared [AudioSessionArbiter] at
      * [MicOwner.LISTEN_ONCE] so it never contends with the agent's own voice I/O.
      * Returns null on any recognition failure (no permission, no speech, etc.) so
      * the UI can simply fall back to typing.
@@ -263,13 +271,28 @@ class OverlayController @Inject constructor(
             // talking over the agent (its say() just completes early).
             runCatching { tts.stop() }
             runCatching {
-                arbiter.withMic(MicOwner.LISTEN_ONCE) { stt.transcribeOnce().text }
+                arbiter.withMic(MicOwner.LISTEN_ONCE) { streamOnce() }
             }.onFailure { Log.w(TAG, "dictation failed: ${it.message}") }
                 .getOrNull()
                 ?.takeIf { it.isNotBlank() }
         } finally {
             _dictating.value = false
+            _dictationText.value = ""
         }
+    }
+
+    /** One streamed utterance: publishes partials, returns the final transcript. */
+    private suspend fun streamOnce(): String? {
+        var finalText: String? = null
+        stt.stream().collect { event ->
+            when (event) {
+                is SttEvent.Partial -> _dictationText.value = event.text
+                is SttEvent.Final -> finalText = event.result.text
+                is SttEvent.Failed -> throw SttException(event.error, event.cause)
+                else -> Unit
+            }
+        }
+        return finalText
     }
 
     /**

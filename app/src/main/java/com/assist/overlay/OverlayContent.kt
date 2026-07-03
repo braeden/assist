@@ -75,6 +75,7 @@ fun OverlayRoot(
     state: OverlayUiState,
     sessions: List<SessionEntity>,
     dictating: Boolean,
+    dictationText: String,
     onToggleExpanded: () -> Unit,
     onDrag: (Offset) -> Unit,
     onInterrupt: () -> Unit,
@@ -90,31 +91,58 @@ fun OverlayRoot(
     // "Listening" is shown iff the mic is genuinely open: dictation overrides the
     // folded phase for display, so the label can never claim a mic that isn't hot.
     val shown = if (dictating) state.copy(phase = AgentPhase.LISTENING) else state
-    if (state.expanded) {
-        Panel(
-            state = shown,
-            sessions = sessions,
-            dictating = dictating,
-            onCollapse = onToggleExpanded,
-            onDrag = onDrag,
-            onInterrupt = onInterrupt,
-            onCancelDictate = onCancelDictate,
-            onNewSession = onNewSession,
-            onSwitchSession = onSwitchSession,
-            onSubmitReply = onSubmitReply,
-            onDictate = onDictate,
-            onSetFocusable = onSetFocusable,
-            onStop = onStop,
-        )
-    } else {
-        Bubble(
-            state = shown,
-            dictating = dictating,
-            onTap = onToggleExpanded,
-            onInterrupt = onInterrupt,
-            onRecordNewMessage = onRecordNewMessage,
-            onCancelDictate = onCancelDictate,
-            onDrag = onDrag,
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (state.expanded) {
+            Panel(
+                state = shown,
+                sessions = sessions,
+                dictating = dictating,
+                onCollapse = onToggleExpanded,
+                onDrag = onDrag,
+                onInterrupt = onInterrupt,
+                onCancelDictate = onCancelDictate,
+                onNewSession = onNewSession,
+                onSwitchSession = onSwitchSession,
+                onSubmitReply = onSubmitReply,
+                onDictate = onDictate,
+                onSetFocusable = onSetFocusable,
+                onStop = onStop,
+            )
+        } else {
+            Bubble(
+                state = shown,
+                dictating = dictating,
+                onTap = onToggleExpanded,
+                onInterrupt = onInterrupt,
+                onRecordNewMessage = onRecordNewMessage,
+                onCancelDictate = onCancelDictate,
+                onDrag = onDrag,
+            )
+        }
+        // Live transcription caption while the mic is hot: what's being heard,
+        // written out under the overlay as it's recognized.
+        if (dictating) {
+            TranscriptionCaption(dictationText.ifBlank { "Listening…" })
+        }
+    }
+}
+
+/** Floating caption pill: the live partial transcript while dictating. */
+@Composable
+private fun TranscriptionCaption(text: String) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = Color(0xE6202124),
+        shadowElevation = 4.dp,
+        modifier = Modifier.widthIn(max = 340.dp),
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
         )
     }
 }

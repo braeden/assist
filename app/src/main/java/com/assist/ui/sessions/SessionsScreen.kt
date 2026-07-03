@@ -16,7 +16,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,43 +55,50 @@ fun SessionsScreen(
     var deleteTarget by remember { mutableStateOf<SessionRowUi?>(null) }
     var showStartDialog by remember { mutableStateOf(false) }
 
-    Scaffold { inner ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(inner)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item {
-                Text("Sessions", style = MaterialTheme.typography.headlineMedium)
-            }
-            item {
-                // The single entry point: every session is born from a task run.
-                Button(
-                    onClick = { showStartDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Start a task") }
-            }
+    // NOTE: no inner Scaffold here — this screen renders inside MainActivity's
+    // Scaffold; nesting a second one double-applied insets and added layout work
+    // to every frame of a scroll.
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            Text("Sessions", style = MaterialTheme.typography.headlineMedium)
+        }
+        item {
+            // Voice-first entry: the overlay comes up already listening. The
+            // typed dialog remains the fallback when overlay/mic aren't granted.
+            Button(
+                onClick = {
+                    if (Permissions.canDrawOverlays(context) && Permissions.hasMicrophone(context)) {
+                        OverlayService.startListening(context)
+                    } else {
+                        showStartDialog = true
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Start a task") }
+        }
 
-            if (!state.loading && state.rows.isEmpty()) {
-                item {
-                    Text(
-                        "No sessions yet. Start one with \"New\" or by running a task.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            items(state.rows, key = { it.id }) { row ->
-                SessionCard(
-                    row = row,
-                    onOpen = { onOpenSession(row.id) },
-                    onRename = { renameTarget = row },
-                    onDelete = { deleteTarget = row },
+        if (!state.loading && state.rows.isEmpty()) {
+            item {
+                Text(
+                    "No sessions yet — tap \"Start a task\" and just say what you want done.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+
+        items(state.rows, key = { it.id }) { row ->
+            SessionCard(
+                row = row,
+                onOpen = { onOpenSession(row.id) },
+                onRename = { renameTarget = row },
+                onDelete = { deleteTarget = row },
+            )
         }
     }
 

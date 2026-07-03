@@ -14,7 +14,6 @@ import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
@@ -26,6 +25,10 @@ import com.assist.R
 import com.assist.agent.AgentService
 import com.assist.ui.theme.AssistTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,6 +54,9 @@ class OverlayService : Service() {
 
     @Inject lateinit var controller: OverlayController
 
+    /** Service-lifetime scope for record/dictate flows (survives recomposition). */
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
     private var windowManager: WindowManager? = null
     private var composeView: ComposeView? = null
     private var lifecycleOwner: OverlayLifecycleOwner? = null
@@ -67,16 +73,44 @@ class OverlayService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
-            stopSelf()
+        when (intent?.action) {
+            ACTION_STOP -> stopSelf()
+            // Voice-first entry ("Start a task"): the overlay comes up already
+            // listening; the captured instruction runs as a task.
+            ACTION_RECORD -> recordAndRun(
+                newSession = intent.getBooleanExtra(EXTRA_NEW_SESSION, false),
+            )
         }
         return START_STICKY
     }
 
     override fun onDestroy() {
         _running.value = false
+        serviceScope.cancel()
         removeOverlay()
         super.onDestroy()
+    }
+
+    /**
+     * Pre-empt whatever the agent is doing, capture one spoken instruction (live
+     * partials feed the caption), and run it — in the currently-selected session,
+     * or a fresh one when [newSession].
+     */
+    private fun recordAndRun(newSession: Boolean = false) {
+        controller.interrupt()
+        serviceScope.launch {
+            val text = controller.dictate()
+            if (!text.isNullOrBlank()) {
+                ContextCompat.startForegroundService(
+                    this@OverlayService,
+                    AgentService.runIntent(
+                        this@OverlayService,
+                        text,
+                        if (newSession) null else controller.currentSession,
+                    ),
+                )
+            }
+        }
     }
 
     // --- Window management --------------------------------------------------
@@ -110,37 +144,19 @@ class OverlayService : Service() {
             setViewTreeSavedStateRegistryOwner(owner)
             setContent {
                 AssistTheme {
-                    val uiScope = rememberCoroutineScope()
                     val state by controller.uiState.collectAsState()
                     val sessions by controller.sessions.collectAsState()
                     val dictating by controller.dictating.collectAsState()
+                    val dictationText by controller.dictationText.collectAsState()
                     OverlayRoot(
                         state = state,
                         sessions = sessions,
                         dictating = dictating,
+                        dictationText = dictationText,
                         onToggleExpanded = controller::toggleExpanded,
                         onDrag = ::moveBy,
                         onInterrupt = controller::interrupt,
-                        onRecordNewMessage = {
-                            // "Record": pre-empt whatever the agent is doing —
-                            // interrupt the run (stops gestures/LLM/speech within
-                            // ~1s) — then capture the new instruction and run it,
-                            // continuing the currently-selected session.
-                            controller.interrupt()
-                            uiScope.launch {
-                                val text = controller.dictate()
-                                if (!text.isNullOrBlank()) {
-                                    ContextCompat.startForegroundService(
-                                        this@OverlayService,
-                                        AgentService.runIntent(
-                                            this@OverlayService,
-                                            text,
-                                            controller.currentSession,
-                                        ),
-                                    )
-                                }
-                            }
-                        },
+                        onRecordNewMessage = { recordAndRun(newSession = false) },
                         onCancelDictate = controller::cancelDictation,
                         onNewSession = controller::newSession,
                         onSwitchSession = controller::switchSession,
@@ -271,11 +287,27 @@ class OverlayService : Service() {
         private const val NOTIFICATION_ID = 43
 
         const val ACTION_STOP = "com.assist.action.OVERLAY_STOP"
+        const val ACTION_RECORD = "com.assist.action.OVERLAY_RECORD"
+        const val EXTRA_NEW_SESSION = "new_session"
 
         private val _running = MutableStateFlow(false)
 
         /** Whether the overlay window is currently shown. Drives the Settings toggle. */
         val running: StateFlow<Boolean> = _running.asStateFlow()
+
+        /**
+         * Voice-first task entry: show the overlay (if not already up) and start
+         * listening immediately. [newSession] starts a fresh session (the
+         * "Start a task" button); false continues the current one.
+         */
+        fun startListening(context: Context, newSession: Boolean = true) {
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, OverlayService::class.java)
+                    .setAction(ACTION_RECORD)
+                    .putExtra(EXTRA_NEW_SESSION, newSession),
+            )
+        }
 
         private const val BASE_FLAGS =
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or

@@ -13,7 +13,7 @@
     <ID>EmptyFunctionBlock:VoiceUserIoTest.kt$VoiceUserIoTest.FakeStt${}</ID>
     <ID>EmptyFunctionBlock:VoiceUserIoTest.kt$VoiceUserIoTest.FakeTts${}</ID>
     <ID>FunctionNaming:MainActivity.kt$@Composable private fun AssistApp()</ID>
-    <ID>FunctionNaming:OverlayContent.kt$@Composable fun OverlayRoot( state: OverlayUiState, sessions: List&lt;SessionEntity&gt;, dictating: Boolean, onToggleExpanded: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, onInterrupt: () -&gt; Unit, onRecordNewMessage: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onNewSession: () -&gt; Unit, onSwitchSession: (Long) -&gt; Unit, onSubmitReply: (String) -&gt; Unit, onDictate: suspend () -&gt; String?, onSetFocusable: (Boolean) -&gt; Unit, onStop: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:OverlayContent.kt$@Composable fun OverlayRoot( state: OverlayUiState, sessions: List&lt;SessionEntity&gt;, dictating: Boolean, dictationText: String, onToggleExpanded: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, onInterrupt: () -&gt; Unit, onRecordNewMessage: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onNewSession: () -&gt; Unit, onSwitchSession: (Long) -&gt; Unit, onSubmitReply: (String) -&gt; Unit, onDictate: suspend () -&gt; String?, onSetFocusable: (Boolean) -&gt; Unit, onStop: () -&gt; Unit, )</ID>
     <ID>FunctionNaming:OverlayContent.kt$@Composable private fun Bubble( state: OverlayUiState, dictating: Boolean, onTap: () -&gt; Unit, onInterrupt: () -&gt; Unit, onRecordNewMessage: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, )</ID>
     <ID>FunctionNaming:OverlayContent.kt$@Composable private fun ConfirmationRow(prompt: ConfirmationPrompt, onSubmitReply: (String) -&gt; Unit)</ID>
     <ID>FunctionNaming:OverlayContent.kt$@Composable private fun Hud(hud: HudState?)</ID>
@@ -23,6 +23,7 @@
     <ID>FunctionNaming:OverlayContent.kt$@Composable private fun StopGlyph(color: Color = Color.White)</ID>
     <ID>FunctionNaming:OverlayContent.kt$@Composable private fun ThinkingRow()</ID>
     <ID>FunctionNaming:OverlayContent.kt$@Composable private fun ToolChipRow(chip: ToolChip)</ID>
+    <ID>FunctionNaming:OverlayContent.kt$@Composable private fun TranscriptionCaption(text: String)</ID>
     <ID>FunctionNaming:RecipesScreen.kt$@Composable fun RecipesScreen( onBack: (() -&gt; Unit)? = null, viewModel: RecipesViewModel = hiltViewModel(), )</ID>
     <ID>FunctionNaming:RecipesScreen.kt$@Composable private fun RecipeCard( row: RecipeRowUi, onView: () -&gt; Unit, onDelete: () -&gt; Unit, )</ID>
     <ID>FunctionNaming:SessionDetailScreen.kt$@Composable fun SessionDetailScreen( onBack: () -&gt; Unit, viewModel: SessionDetailViewModel = hiltViewModel(), )</ID>
@@ -63,8 +64,8 @@
     <ID>LongParameterList:GestureFactory.kt$GestureFactory$(x1: Int, y1: Int, x2: Int, y2: Int, startTime: Long, duration: Long)</ID>
     <ID>LongParameterList:OverlayContent.kt$( busy: Boolean, dictating: Boolean, onSubmitReply: (String) -&gt; Unit, onDictate: suspend () -&gt; String?, onCancelDictate: () -&gt; Unit, onInterrupt: () -&gt; Unit, onSetFocusable: (Boolean) -&gt; Unit, )</ID>
     <ID>LongParameterList:OverlayContent.kt$( state: OverlayUiState, dictating: Boolean, onTap: () -&gt; Unit, onInterrupt: () -&gt; Unit, onRecordNewMessage: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, )</ID>
+    <ID>LongParameterList:OverlayContent.kt$( state: OverlayUiState, sessions: List&lt;SessionEntity&gt;, dictating: Boolean, dictationText: String, onToggleExpanded: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, onInterrupt: () -&gt; Unit, onRecordNewMessage: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onNewSession: () -&gt; Unit, onSwitchSession: (Long) -&gt; Unit, onSubmitReply: (String) -&gt; Unit, onDictate: suspend () -&gt; String?, onSetFocusable: (Boolean) -&gt; Unit, onStop: () -&gt; Unit, )</ID>
     <ID>LongParameterList:OverlayContent.kt$( state: OverlayUiState, sessions: List&lt;SessionEntity&gt;, dictating: Boolean, onCollapse: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, onInterrupt: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onNewSession: () -&gt; Unit, onSwitchSession: (Long) -&gt; Unit, onSubmitReply: (String) -&gt; Unit, onDictate: suspend () -&gt; String?, onSetFocusable: (Boolean) -&gt; Unit, onStop: () -&gt; Unit, )</ID>
-    <ID>LongParameterList:OverlayContent.kt$( state: OverlayUiState, sessions: List&lt;SessionEntity&gt;, dictating: Boolean, onToggleExpanded: () -&gt; Unit, onDrag: (Offset) -&gt; Unit, onInterrupt: () -&gt; Unit, onRecordNewMessage: () -&gt; Unit, onCancelDictate: () -&gt; Unit, onNewSession: () -&gt; Unit, onSwitchSession: (Long) -&gt; Unit, onSubmitReply: (String) -&gt; Unit, onDictate: suspend () -&gt; String?, onSetFocusable: (Boolean) -&gt; Unit, onStop: () -&gt; Unit, )</ID>
     <ID>LongParameterList:OverlayController.kt$OverlayController$( private val bus: AgentEventBus, private val agentLoop: AgentLoop, private val repository: SessionRepository, private val contextTracker: ContextTracker, private val stt: SttEngine, private val tts: TtsEngine, private val arbiter: AudioSessionArbiter, private val settings: SettingsStore, @AppScope private val scope: CoroutineScope, )</ID>
     <ID>LongParameterList:SessionRepository.kt$SessionRepository$( sessionId: Long, messageId: Long?, name: String, argsJson: String, resultJson: String?, success: Boolean, durationMs: Long, )</ID>
     <ID>LongParameterList:SettingsScreen.kt$( accessibilityOk: Boolean, overlayOk: Boolean, micOk: Boolean, notifOk: Boolean, onAccessibility: () -&gt; Unit, onOverlay: () -&gt; Unit, onMic: () -&gt; Unit, onNotif: () -&gt; Unit, )</ID>
@@ -87,6 +88,7 @@
     <ID>MagicNumber:LlmModule.kt$LlmModule$30</ID>
     <ID>MagicNumber:MemoryStore.kt$MemoryStore$1024</ID>
     <ID>MagicNumber:MemoryStore.kt$MemoryStore$1024.0</ID>
+    <ID>MagicNumber:OverlayContent.kt$0xE6202124</ID>
     <ID>MagicNumber:OverlayContent.kt$0xFF00838F</ID>
     <ID>MagicNumber:OverlayContent.kt$0xFF1565C0</ID>
     <ID>MagicNumber:OverlayContent.kt$0xFF2E7D32</ID>

@@ -10,15 +10,19 @@
 #   scripts/deploy-pixel.sh                       # deploy to the one online device
 #   ANDROID_SERIAL=<pixel-serial> scripts/deploy-pixel.sh
 #   scripts/deploy-pixel.sh --a11y                # also open a11y settings after
+#   scripts/deploy-pixel.sh --release             # non-debuggable build (real perf;
+#                                                 #  Compose debug builds are janky)
 #   scripts/deploy-pixel.sh -- <extra gradle args>
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 require_gradle
 
 enable_a11y=0
+release=0
 gradle_args=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --a11y) enable_a11y=1; shift ;;
+    --release) release=1; shift ;;
     --) shift; gradle_args+=("$@"); break ;;
     *) gradle_args+=("$1"); shift ;;
   esac
@@ -31,9 +35,19 @@ export ANDROID_SERIAL="$serial"
 model="$("$ADB" -s "$serial" shell getprop ro.product.model 2>/dev/null | tr -d '\r' || true)"
 echo ">> deploying to $serial${model:+ ($model)}  (JAVA_HOME=$JAVA_HOME)"
 
-# runApp = :app:installDebug then `am start` the launcher (see gradle/device.gradle.kts).
-"$GRADLEW" -p "$ASSIST_ROOT" runApp ${gradle_args[@]+"${gradle_args[@]}"}
-echo ">> installed + launched com.assist on $serial"
+if [[ "$release" -eq 1 ]]; then
+  # Release build (debug-keystore fallback signing when no ASSIST_KEYSTORE_* env
+  # is set — still installable). Non-debuggable Compose is dramatically smoother;
+  # use this variant for day-to-day perf-sensitive testing.
+  # NOTE: swapping between a real release-signed install and this one requires an
+  # uninstall (different signer); the debug-fallback signing matches installDebug.
+  "$GRADLEW" -p "$ASSIST_ROOT" :app:installRelease launchApp ${gradle_args[@]+"${gradle_args[@]}"}
+  echo ">> installed + launched com.assist (release) on $serial"
+else
+  # runApp = :app:installDebug then `am start` the launcher (see gradle/device.gradle.kts).
+  "$GRADLEW" -p "$ASSIST_ROOT" runApp ${gradle_args[@]+"${gradle_args[@]}"}
+  echo ">> installed + launched com.assist on $serial"
+fi
 
 if [[ "$enable_a11y" -eq 1 ]]; then
   echo ">> enabling accessibility service ..."
