@@ -60,22 +60,32 @@ class AgentService : Service() {
                     Log.w(TAG, "no '$EXTRA_INTENT' extra; ignoring start")
                     stopSelfSoon()
                 } else {
-                    runIntent(userIntent)
+                    val sessionId = intent
+                        ?.getLongExtra(EXTRA_SESSION_ID, NO_SESSION)
+                        ?.takeIf { it > 0 }
+                    runIntent(userIntent, sessionId)
                 }
             }
         }
         return START_NOT_STICKY
     }
 
-    private fun runIntent(userIntent: String) {
+    private fun runIntent(
+        userIntent: String,
+        resumeSessionId: Long? = null,
+    ) {
         seedApiKeyFromBuildConfig()
         startForegroundInternal("Running: ${userIntent.take(60)}")
         scope.launch {
-            val session = repository.createSession(
-                title = userIntent.take(80),
-                model = settings.getAgentModel().modelId,
-            )
-            Log.i(TAG, "DEBUG_RUN session=${session.id} intent=\"$userIntent\"")
+            // Continue an existing session when asked (overlay session switch /
+            // follow-up messages); otherwise every run starts a fresh session.
+            val session =
+                resumeSessionId?.let { repository.resumeSession(it) }
+                    ?: repository.createSession(
+                        title = userIntent.take(80),
+                        model = settings.getAgentModel().modelId,
+                    )
+            Log.i(TAG, "run session=${session.id} resumed=${resumeSessionId != null} intent=\"$userIntent\"")
             runCatching { agentLoop.start(session.id, userIntent).join() }
                 .onFailure { Log.e(TAG, "run failed", it) }
             Log.i(TAG, "run complete for session=${session.id}")
@@ -130,11 +140,17 @@ class AgentService : Service() {
         const val ACTION_RUN = "com.assist.action.AGENT_RUN"
         const val ACTION_INTERRUPT = "com.assist.action.AGENT_INTERRUPT"
         const val EXTRA_INTENT = "intent"
+        const val EXTRA_SESSION_ID = "session_id"
+        private const val NO_SESSION = -1L
 
-        /** Build a start intent carrying [userIntent]. */
-        fun runIntent(context: Context, userIntent: String): Intent =
+        /**
+         * Build a start intent carrying [userIntent]. Pass [sessionId] to continue
+         * an existing session instead of creating a new one.
+         */
+        fun runIntent(context: Context, userIntent: String, sessionId: Long? = null): Intent =
             Intent(context, AgentService::class.java)
                 .setAction(ACTION_RUN)
                 .putExtra(EXTRA_INTENT, userIntent)
+                .apply { sessionId?.let { putExtra(EXTRA_SESSION_ID, it) } }
     }
 }

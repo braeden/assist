@@ -81,6 +81,12 @@ class OverlayController @Inject constructor(
     @Volatile
     private var currentSessionId: Long? = null
 
+    /** The session new overlay messages should continue (null → fresh session). */
+    val currentSession: Long? get() = currentSessionId
+
+    /** Whether a task is in flight (routes typed messages: reply vs. new run). */
+    val isAgentRunning: Boolean get() = agentLoop.isRunning
+
     /** The overlay's single source of truth. */
     val uiState: StateFlow<OverlayUiState> = buildState()
 
@@ -137,7 +143,7 @@ class OverlayController @Inject constructor(
                 model = settings.getAgentModel().modelId,
             )
             currentSessionId = session.id
-            hud.tryEmit(OverlayInput.SessionChanged(session.id))
+            hud.tryEmit(OverlayInput.SessionChanged(session.id, session.title))
             refreshHud()
             Log.i(TAG, "overlay new session=${session.id}")
         }
@@ -146,9 +152,9 @@ class OverlayController @Inject constructor(
     /** Switch the current/HUD session to [sessionId]. */
     fun switchSession(sessionId: Long) {
         scope.launch {
-            repository.resumeSession(sessionId)
+            val session = repository.resumeSession(sessionId)
             currentSessionId = sessionId
-            hud.tryEmit(OverlayInput.SessionChanged(sessionId))
+            hud.tryEmit(OverlayInput.SessionChanged(sessionId, session?.title))
             refreshHud()
             Log.i(TAG, "overlay switch session=$sessionId")
         }

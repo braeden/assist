@@ -124,14 +124,19 @@ class OverlayService : Service() {
                         onRecordNewMessage = {
                             // "Record": pre-empt whatever the agent is doing —
                             // interrupt the run (stops gestures/LLM/speech within
-                            // ~1s) — then capture the new instruction and run it.
+                            // ~1s) — then capture the new instruction and run it,
+                            // continuing the currently-selected session.
                             controller.interrupt()
                             uiScope.launch {
                                 val text = controller.dictate()
                                 if (!text.isNullOrBlank()) {
                                     ContextCompat.startForegroundService(
                                         this@OverlayService,
-                                        AgentService.runIntent(this@OverlayService, text),
+                                        AgentService.runIntent(
+                                            this@OverlayService,
+                                            text,
+                                            controller.currentSession,
+                                        ),
                                     )
                                 }
                             }
@@ -140,7 +145,22 @@ class OverlayService : Service() {
                         onNewSession = controller::newSession,
                         onSwitchSession = controller::switchSession,
                         onSubmitReply = { text ->
-                            controller.submitReply(text)
+                            if (controller.isAgentRunning) {
+                                // A task is in flight: the text answers/steers it.
+                                controller.submitReply(text)
+                            } else {
+                                // Idle: the text is a new instruction — run it in
+                                // the currently-selected session so switching
+                                // sessions actually continues that conversation.
+                                ContextCompat.startForegroundService(
+                                    this@OverlayService,
+                                    AgentService.runIntent(
+                                        this@OverlayService,
+                                        text,
+                                        controller.currentSession,
+                                    ),
+                                )
+                            }
                             setFocusable(false)
                         },
                         onDictate = controller::dictate,
