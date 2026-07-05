@@ -467,6 +467,31 @@ Feasibility confirmed; decisions locked (`.claude/phases/phase-00-decisions.md`)
   double-tap cancel, a real `perform_actions` run, and live web_search/advisor
   calls (need real API key + device).
 
+### Overlay persistence — decouple from task lifecycle ✅
+- **Symptom investigated:** "overlay closes when the task completes." On `main`
+  the overlay is its own `specialUse` FGS and nothing in code stops it on
+  completion (only the Settings "Stop overlay" toggle + the panel ✕ do) — a live
+  emulator run confirmed the bubble survives task completion with no
+  `OverlayService.onDestroy`. The real-device disappearance is therefore either
+  an OEM process-kill once the *task* FGS (`AgentService`) stops, or the
+  documented `HIDE_NON_SYSTEM_OVERLAY_WINDOWS` force-hide on certain screens.
+- **Fix (coordination, not a full FGS merge):** `AgentService.runIntent` now
+  calls `ensureOverlay()` — starts `OverlayService` (permission-gated via
+  `Settings.canDrawOverlays`) as the run's persistent visible companion. Every
+  task entry path (voice, typed, wake-word, debug) now guarantees the overlay is
+  up, and because it's a separate persistent FGS it outlives the task service, so
+  the bubble stays put after completion as a one-tap entry point for the next
+  task. A foreground service may start another FGS, so this is allowed while
+  driving other apps.
+- **Self-heal:** `OverlayService.onStartCommand` now re-adds the window when
+  `composeView == null` (START_STICKY redelivery after a process kill, or a
+  re-start while the view was lost) — the service can no longer sit foreground
+  with no visible bubble.
+- **Verified:** 198 unit tests + all linters green; on `emulator-5554` a
+  `DEBUG_RUN` fired with **no** overlay pre-shown auto-brought the bubble up
+  (`OverlayService onCreate` right after `run session=`) and it persisted through
+  completion (ServiceRecord alive, no `onDestroy`; screenshot on home screen).
+
 ### Next
 - **Follow-ups:** unify `AgentService`+`OverlayService` into one coordinated FGS;
   `SessionSteering` barge-in/budget wiring; `AgentService` optional existing-

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.wisp.BuildConfig
@@ -16,6 +17,7 @@ import com.wisp.data.SecretStore
 import com.wisp.data.SessionRepository
 import com.wisp.data.SettingsStore
 import com.wisp.di.AppScope
+import com.wisp.overlay.OverlayService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -81,6 +83,7 @@ class AgentService : Service() {
     ) {
         seedApiKeyFromBuildConfig()
         startForegroundInternal("Running: ${userIntent.take(60)}")
+        ensureOverlay()
         scope.launch {
             // Continue an existing session when asked (overlay session switch /
             // follow-up messages); otherwise every run starts a fresh session.
@@ -115,6 +118,21 @@ class AgentService : Service() {
 
     private fun stopSelfSoon() {
         if (!agentLoop.isRunning) stopSelf()
+    }
+
+    /**
+     * Bring the live overlay up (if the user granted the permission) as the run's
+     * persistent visible companion. The overlay is its own foreground service, so
+     * once shown it outlives this task service — the bubble stays put when the run
+     * finishes and [stopSelfSoon] stops us, giving the user a one-tap entry point
+     * for the next task instead of vanishing on completion. A foreground service
+     * may start another FGS, so this is allowed even though we drive other apps.
+     */
+    private fun ensureOverlay() {
+        if (Settings.canDrawOverlays(this)) {
+            runCatching { OverlayService.start(this) }
+                .onFailure { Log.w(TAG, "could not show overlay", it) }
+        }
     }
 
     private fun startForegroundInternal(text: String) {

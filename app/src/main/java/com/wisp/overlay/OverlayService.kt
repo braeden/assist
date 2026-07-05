@@ -98,6 +98,11 @@ class OverlayService : Service() {
                 recordAndRun(
                     newSession = intent.getBooleanExtra(EXTRA_NEW_SESSION, false),
                 )
+            // START_STICKY redelivery (null intent after a process kill) or a
+            // plain re-start while the service already lives: make sure the
+            // window is actually attached. Without this the service could stay
+            // foreground with no visible bubble.
+            else -> if (composeView == null) addOverlay()
         }
         return START_STICKY
     }
