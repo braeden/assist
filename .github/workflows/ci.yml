@@ -31,7 +31,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Set up Gradle (with cache)
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       # No ANTHROPIC_API_KEY is passed: BuildConfig.ANTHROPIC_API_KEY resolves to
       # "" and the instrumented smoke test (not run here) would skip cleanly.
