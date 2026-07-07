@@ -28,7 +28,7 @@ jobs:
       # local.properties. AGP auto-provisions platforms;android-35 +
       # build-tools;35.0.0 on first use.
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Set up Gradle (with cache)
         uses: gradle/actions/setup-gradle@v4
